@@ -1,0 +1,50 @@
+{
+  "name": "dse-agentic-scraper",
+  "version": "1.0.0",
+  "description": "Agentic DSE Instrument Data Scraping & Ingestion System",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "scrape": "node src/cli/scrape.js",
+    "scrape:all": "node src/cli/scrape-all.js",
+    "db:migrate": "node src/database/migrate.js",
+    "db:rollback": "node src/database/migrate.js rollback",
+    "db:seed": "node src/database/seed.js",
+    "test": "node --test tests/**/*.test.js tests/**/**/*.test.js",
+    "test:unit": "node --test tests/unit/**/*.test.js",
+    "test:integration": "node --test tests/integration/**/*.test.js",
+    "lint": "eslint src tests --ext .js",
+    "lint:fix": "eslint src tests --ext .js --fix"
+  },
+  "keywords": [
+    "dse",
+    "dhaka-stock-exchange",
+    "scraper",
+    "agentic",
+    "workflow",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "knex": "^3.1.0",
+    "mysql2": "^3.11.5",
+    "openai": "^4.77.0",
+    "playwright": "^1.49.1",
+    "uuid": "^11.0.3",
+    "winston": "^3.17.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.17.0",
+    "nock": "^13.5.6"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

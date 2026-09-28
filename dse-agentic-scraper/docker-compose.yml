@@ -1,0 +1,87 @@
+version: '3.9'
+
+# ============================================================
+# DSE Agentic Scraper — Docker Compose
+#
+# Services:
+#   db    — MySQL 8.0
+#   app   — Node.js application
+#
+# Usage:
+#   docker compose up          # start all services
+#   docker compose up -d       # start in background
+#   docker compose down        # stop all services
+#   docker compose down -v     # stop and remove volumes (resets DB)
+#
+# After first start, run migrations:
+#   docker compose exec app npm run db:migrate
+# ============================================================
+
+services:
+  # --------------------------------------------------------
+  # MySQL database
+  # --------------------------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: dse_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: dse_agentic
+      MYSQL_USER: dse_user
+      MYSQL_PASSWORD: dse_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "dse_user", "-pdse_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # --------------------------------------------------------
+  # Node.js application
+  # --------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dse_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_CLIENT: mysql2
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      DATABASE_NAME: dse_agentic
+      DATABASE_USER: dse_user
+      DATABASE_PASSWORD: dse_password
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      DSE_BASE_URL: https://dse.com.bd
+      REQUEST_TIMEOUT_MS: 15000
+      REQUEST_DELAY_MS: 1500
+      MAX_RETRIES: 3
+      MAX_RECOVERY_ATTEMPTS: 3
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: json
+      DISABLE_PLAYWRIGHT: ${DISABLE_PLAYWRIGHT:-false}
+      PLAYWRIGHT_HEADLESS: "true"
+    volumes:
+      # Mount .env if present (overrides environment above for local dev)
+      - ./.env:/app/.env:ro
+    command: >
+      sh -c "npm run db:migrate && node src/app.js"
+
+volumes:
+  mysql_data:
+    driver: local

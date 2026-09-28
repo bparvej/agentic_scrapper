@@ -1,0 +1,47 @@
+{
+  "props": {
+    "pageProps": {
+      "companyData": {
+        "symbol": "BATBC",
+        "companyName": "British American Tobacco Bangladesh Company Limited",
+        "scripCode": "11001",
+        "isin": "BD0101BATBC7",
+        "sector": "Food & Allied",
+        "category": "A",
+        "instrumentType": "Equity",
+        "market": "DSE Main Board",
+        "ltp": "680.40",
+        "open": "675.00",
+        "high": "685.00",
+        "low": "671.50",
+        "close": "678.00",
+        "ycp": "672.30",
+        "change": "8.10",
+        "changePercent": "1.21%",
+        "weekHigh52": "780.00",
+        "weekLow52": "590.00",
+        "volume": "12450",
+        "trade": "245",
+        "turnoverMn": "8.47",
+        "marketCap": "1245000000",
+        "freeFloatCap": "623000000",
+        "authorizedCapital": "500000000",
+        "paidUpCapital": "181400000",
+        "faceValue": "10",
+        "totalSecurities": "18140000",
+        "eps": "68.45",
+        "navps": "187.23",
+        "peRatio": "9.93",
+        "dividendYield": "7.35%",
+        "cashDividend": "50.00",
+        "yearEnded": "December 2025",
+        "sponsorDirectorPercent": "72.91%",
+        "institutionalPercent": "14.23%",
+        "foreignPercent": "2.15%",
+        "publicPercent": "10.71%"
+      }
+    }
+  },
+  "page": "/company/[symbol]",
+  "query": { "symbol": "BATBC" }
+}
