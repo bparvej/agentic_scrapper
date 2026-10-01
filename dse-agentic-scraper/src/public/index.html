@@ -416,15 +416,50 @@
         <!-- SCRAPED DATA SECTION -->
         <section id="data" class="view-section">
             <h2>Scraped Instruments</h2>
-            <p class="subtitle">Human verification portal. View all data committed to the database by the Persistence Agent.</p>
-            <div style="margin-bottom: 2rem;">
-                <button class="btn-primary" onclick="loadInstruments()">Refresh Data</button>
+            <p class="subtitle">Human verification portal. Select an instrument to view detailed scraped data including Corporate Actions and News without overloading the database.</p>
+            
+            <div class="controls-card">
+                <div class="url-box">
+                    <div class="url-prefix">Select Instrument</div>
+                    <select id="dbSymbolSelect">
+                        <option value="GP">GP (Grameenphone Ltd.)</option>
+                        <option value="BATBC">BATBC (British American Tobacco)</option>
+                        <option value="SQURPHARMA">SQURPHARMA (Square Pharma)</option>
+                        <option value="BEXIMCO">BEXIMCO</option>
+                        <option value="RENATA">RENATA</option>
+                        <option value="WALTONHIL">WALTONHIL</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="loadInstrumentDetails()">Fetch Data</button>
             </div>
             
-            <div id="instrumentsLoading" style="display: none; color: var(--text-muted);"><div class="loader"></div> Loading from database...</div>
+            <div id="instrumentsLoading" style="display: none; color: var(--text-muted); text-align: center; margin: 2rem 0;"><div class="loader"></div> Querying Database...</div>
+            <div id="instrumentsError" style="display: none; color: var(--error); background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; border: 1px solid var(--error);"></div>
             
-            <div class="instruments-grid" id="instrumentsGrid">
-                <!-- Populated by JS -->
+            <div id="instrumentDetailContainer" style="display: none;">
+                <!-- Financials & Market Cap -->
+                <div class="data-table-container" style="display: block; margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--accent-primary);">Market & Financial Data</h3>
+                    <table>
+                        <tbody id="dbMarketBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Corporate Actions -->
+                <div class="data-table-container" style="display: block; margin-bottom: 2rem; border-color: var(--accent-secondary);">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--accent-secondary);">Corporate Actions & Dividends</h3>
+                    <div id="dbCorporateActionsBody">
+                        <p style="color: var(--text-muted);">No corporate actions recorded in the database yet.</p>
+                    </div>
+                </div>
+
+                <!-- News & Announcements -->
+                <div class="data-table-container" style="display: block; border-color: var(--success);">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--success);">Recent News & Announcements</h3>
+                    <div id="dbNewsBody">
+                        <p style="color: var(--text-muted);">No news announcements recorded in the database yet.</p>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -457,8 +492,7 @@
             
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
-            
-            if (tabId === 'data') loadInstruments();
+            if (tabId === 'data') loadInstrumentDetails();
         }
 
         // --- Live Demo Agentic Workflow Simulation ---
@@ -626,39 +660,99 @@
         }
 
         // --- Scraped Data Menu ---
-        async function loadInstruments() {
-            const grid = document.getElementById('instrumentsGrid');
+        async function loadInstrumentDetails() {
+            const symbol = document.getElementById('dbSymbolSelect').value;
+            const container = document.getElementById('instrumentDetailContainer');
             const loader = document.getElementById('instrumentsLoading');
+            const errorBox = document.getElementById('instrumentsError');
             
-            grid.innerHTML = '';
+            container.style.display = 'none';
+            errorBox.style.display = 'none';
             loader.style.display = 'block';
             
             try {
-                const res = await fetch('/api/instruments');
+                const res = await fetch(`/api/instruments/${symbol}`);
                 const data = await res.json();
                 
                 loader.style.display = 'none';
                 
-                if(!data.instruments || data.instruments.length === 0) {
-                    grid.innerHTML = '<p style="color: var(--warning);">No instruments scraped yet. Go to Live Demo to scrape some!</p>';
-                    return;
+                if(!res.ok) {
+                    throw new Error(data.error || 'Failed to fetch data');
+                }
+
+                const inst = data.instrument || {};
+                const mData = data.marketData || {};
+                const fData = data.financialData || {};
+                
+                // Populate Market
+                document.getElementById('dbMarketBody').innerHTML = `
+                    <tr>
+                        <td style="color: var(--text-muted);">Symbol</td>
+                        <td style="font-weight: 700; color: white;">${inst.symbol || symbol}</td>
+                        <td style="color: var(--text-muted);">Company</td>
+                        <td>${inst.company_name || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">Sector</td>
+                        <td>${inst.sector || 'N/A'}</td>
+                        <td style="color: var(--text-muted);">LTP</td>
+                        <td style="color: var(--accent-primary); font-weight: 700;">৳${mData.last_trade_price || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--text-muted);">EPS</td>
+                        <td>${fData.eps || 'N/A'}</td>
+                        <td style="color: var(--text-muted);">P/E Ratio</td>
+                        <td>${fData.pe_ratio || 'N/A'}</td>
+                    </tr>
+                `;
+
+                // Render Corporate Actions (Parse JSON if string)
+                let corpActionsHTML = '<p style="color: var(--text-muted);">No corporate actions recorded in the database yet.</p>';
+                let corpData = inst.corporate_actions;
+                if (typeof corpData === 'string') {
+                    try { corpData = JSON.parse(corpData); } catch(e) {}
                 }
                 
-                data.instruments.forEach(inst => {
-                    grid.innerHTML += `
-                        <div class="instrument-card" onclick="alert('In a full app, this would open details for ${inst.symbol}')">
-                            <h3>${inst.symbol}</h3>
-                            <p style="font-size: 0.85rem; color: var(--text-muted);">${inst.company_name || 'N/A'}</p>
-                            <div style="margin-top: 1rem; display: flex; justify-content: space-between; font-size: 0.8rem;">
-                                <span>Sector:</span>
-                                <span style="color: white;">${inst.sector || 'Unknown'}</span>
-                            </div>
-                        </div>
-                    `;
-                });
+                if (corpData && Array.isArray(corpData) && corpData.length > 0) {
+                    corpActionsHTML = '<table style="width:100%;"><tr style="color:var(--text-muted);font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.1);"><th>Year</th><th>Dividend</th><th>AGM Date</th><th>Record Date</th></tr>';
+                    corpData.forEach(action => {
+                        corpActionsHTML += `<tr>
+                            <td>${action.year || '-'}</td>
+                            <td style="color:var(--accent-secondary);font-weight:600;">${action.dividend || '-'}</td>
+                            <td>${action.agm_date || '-'}</td>
+                            <td>${action.record_date || '-'}</td>
+                        </tr>`;
+                    });
+                    corpActionsHTML += '</table>';
+                }
+                document.getElementById('dbCorporateActionsBody').innerHTML = corpActionsHTML;
+
+                // Render News
+                let newsHTML = '<p style="color: var(--text-muted);">No news announcements recorded in the database yet.</p>';
+                let newsData = inst.announcements;
+                if (typeof newsData === 'string') {
+                    try { newsData = JSON.parse(newsData); } catch(e) {}
+                }
+                
+                if (newsData && Array.isArray(newsData) && newsData.length > 0) {
+                    newsHTML = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+                    newsData.forEach(news => {
+                        newsHTML += `<div style="background: rgba(16, 185, 129, 0.05); border-left: 3px solid var(--success); padding: 1rem; border-radius: 0 0.5rem 0.5rem 0;">
+                            <div style="font-size: 0.85rem; color: var(--success); margin-bottom: 0.5rem; font-weight: 600;">${news.date || 'Recent'}</div>
+                            <h4 style="margin-bottom: 0.5rem; color: white;">${news.title || 'Announcement'}</h4>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">${news.description || ''}</p>
+                        </div>`;
+                    });
+                    newsHTML += '</div>';
+                }
+                document.getElementById('dbNewsBody').innerHTML = newsHTML;
+
+                container.style.display = 'block';
+                
             } catch(err) {
                 loader.style.display = 'none';
-                grid.innerHTML = `<p style="color: var(--error);">Failed to load: ${err.message}</p>`;
+                errorBox.style.display = 'block';
+                errorBox.innerHTML = `<strong>Error:</strong> ${err.message}<br><br><span style="font-size: 0.85rem; opacity: 0.8;">Note: If the MySQL database is offline (like on Render free tier), fetching directly from DB will fail.</span>`;
             }
         }
     </script>
