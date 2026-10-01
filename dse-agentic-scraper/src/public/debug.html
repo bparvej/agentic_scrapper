@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Scraper - Code Execution & Logs</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --panel-bg: #161b22;
+            --border: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --warn: #d29922;
+            --error: #f85149;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        nav {
+            width: 250px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo { font-weight: 700; color: var(--accent); font-size: 1.2rem; margin-bottom: 2rem; }
+        
+        .nav-links a {
+            display: block;
+            padding: 0.8rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(88, 166, 255, 0.1);
+            color: var(--accent);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            gap: 2rem;
+            overflow-y: auto;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Execution Path UI */
+        .execution-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .path-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .node {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            padding: 0.8rem 1.2rem;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .node.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(88, 166, 255, 0.2);
+            color: #fff;
+        }
+
+        .node::after {
+            content: '→';
+            position: absolute;
+            right: -1.2rem;
+            color: var(--text-muted);
+        }
+        .node:last-child::after { display: none; }
+
+        /* Terminal Logs */
+        .terminal {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            flex: 1.5;
+            overflow-y: auto;
+            color: #a5d6ff;
+        }
+
+        .log-entry { margin-bottom: 0.2rem; line-height: 1.4; display: flex; gap: 1rem; }
+        .log-time { color: var(--text-muted); min-width: 180px; }
+        .log-level { text-transform: uppercase; min-width: 50px; font-weight: bold; }
+        
+        .level-info { color: var(--accent); }
+        .level-warn { color: var(--warn); }
+        .level-error { color: var(--error); }
+        .level-debug { color: var(--text-muted); }
+
+        .log-module { color: #ff7b72; min-width: 120px; }
+        .log-msg { color: #c9d1d9; flex: 1; word-break: break-all; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">System Debugger</div>
+        <div class="nav-links">
+            <a href="/index.html">← Back to App</a>
+            <a href="/presentation.html">✨ Presentation</a>
+            <a href="/debug.html" class="active">🛠️ System Logs & Path</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="header">
+            <h2>Code Execution Traversing Path</h2>
+            <button onclick="clearLogs()" style="padding: 0.5rem 1rem; background: var(--border); color: white; border: none; border-radius: 4px; cursor: pointer;">Clear Logs</button>
+        </div>
+
+        <div class="execution-panel">
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Real-time tracking of agents and files actively processing data.</p>
+            <div class="path-container" id="pathContainer">
+                <div class="node active">src/app.js (Listening)</div>
+            </div>
+        </div>
+
+        <h2 style="margin-top: 1rem;">System Logs Terminal</h2>
+        <div class="terminal" id="terminal">
+            <!-- Logs appear here -->
+        </div>
+    </main>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const pathContainer = document.getElementById('pathContainer');
+        
+        // Map log modules/agents to their underlying files for the traversing UI
+        const fileMap = {
+            'orchestrator': 'src/agents/orchestrator/Orchestrator.js',
+            'source-discovery': 'src/agents/discovery/SourceDiscoveryAgent.js',
+            'extraction': 'src/agents/extraction/ExtractionAgent.js',
+            'validation': 'src/agents/validation/ValidationAgent.js',
+            'persistence': 'src/agents/persistence/PersistenceAgent.js',
+            'recovery': 'src/agents/recovery/RecoveryAgent.js',
+            'dse': 'src/tools/dse/DseTool.js',
+            'http': 'src/tools/http/HttpTool.js',
+            'database': 'src/database/index.js'
+        };
+
+        const activeNodes = new Set();
+
+        function addPathNode(agentOrModule) {
+            const fileName = fileMap[agentOrModule] || `src/.../${agentOrModule}.js`;
+            if (activeNodes.has(fileName)) return;
+            
+            // Remove active class from old nodes
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+            
+            const el = document.createElement('div');
+            el.className = 'node active';
+            el.innerText = fileName;
+            pathContainer.appendChild(el);
+            
+            activeNodes.add(fileName);
+            
+            // Keep UI clean, max 8 nodes
+            if (pathContainer.children.length > 8) {
+                const first = pathContainer.children[0];
+                activeNodes.delete(first.innerText);
+                first.remove();
+            }
+        }
+
+        function clearLogs() {
+            terminal.innerHTML = '';
+            pathContainer.innerHTML = '<div class="node active">src/app.js (Listening)</div>';
+            activeNodes.clear();
+        }
+
+        // Connect to SSE
+        const evtSource = new EventSource("/api/debug/stream");
+        
+        evtSource.onmessage = function(event) {
+            try {
+                const logData = JSON.parse(event.data);
+                
+                // Add to Terminal
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                
+                const time = logData.timestamp ? new Date(logData.timestamp).toISOString() : new Date().toISOString();
+                const level = logData.level || 'info';
+                const module = logData.agent || logData.tool || logData.module || logData.route || 'system';
+                const msg = logData.message || JSON.stringify(logData);
+                
+                entry.innerHTML = `
+                    <span class="log-time">[${time}]</span>
+                    <span class="log-level level-${level}">${level}</span>
+                    <span class="log-module">[${module}]</span>
+                    <span class="log-msg">${msg}</span>
+                `;
+                
+                terminal.appendChild(entry);
+                terminal.scrollTop = terminal.scrollHeight;
+                
+                // Update Code Traversing Path
+                if (module !== 'system') {
+                    addPathNode(module);
+                }
+                
+            } catch (e) {
+                // Not JSON
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = `<span class="log-msg">${event.data}</span>`;
+                terminal.appendChild(entry);
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+        };
+
+        evtSource.onerror = function(err) {
+            console.error("EventSource failed:", err);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry level-error';
+            entry.innerText = "Connection to log stream lost. Reconnecting...";
+            terminal.appendChild(entry);
+        };
+    </script>
+</body>
+</html>

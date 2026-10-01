@@ -324,6 +324,9 @@
         <a href="/presentation.html" style="text-decoration: none;">
             <div class="nav-item">✨ Presentation (POC)</div>
         </a>
+        <a href="/debug.html" style="text-decoration: none;">
+            <div class="nav-item">🛠️ Code & Logs (Debug)</div>
+        </a>
     </aside>
 
     <main class="main-content">
@@ -561,6 +564,12 @@
                     <td>Market Cap</td>
                     <td>৳${(mData.market_cap || 0).toLocaleString()}</td>
                 </tr>
+                <tr>
+                    <td>Authorized Capital</td>
+                    <td>৳${(mData.authorized_capital || 0).toLocaleString()} mn</td>
+                    <td>Paid-Up Capital</td>
+                    <td>৳${(mData.paid_up_capital || 0).toLocaleString()} mn</td>
+                </tr>
             `;
 
             document.getElementById('financialDataBody').innerHTML = `
@@ -575,6 +584,12 @@
                     <td>${fData.pe_ratio || 'N/A'}</td>
                     <td>Total Securities</td>
                     <td>${(fData.total_securities || 0).toLocaleString()}</td>
+                </tr>
+                <tr>
+                    <td>Listing Year</td>
+                    <td>${data.listing_year || 'N/A'}</td>
+                    <td>Trade Count</td>
+                    <td>${(mData.trade_count || 0).toLocaleString()}</td>
                 </tr>
             `;
         }

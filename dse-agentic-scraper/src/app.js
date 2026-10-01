@@ -9,6 +9,7 @@ const errorHandler = require('./api/middleware/errorHandler');
 const scrapeRoutes = require('./api/routes/scrape');
 const instrumentRoutes = require('./api/routes/instruments');
 const healthRoutes = require('./api/routes/health');
+const debugRoutes = require('./api/routes/debug');
 
 const log = logger.createChild({ module: 'app' });
 
@@ -35,6 +36,7 @@ function createApp() {
   app.use('/api/scrape', scrapeRoutes);
   app.use('/api/instruments', instrumentRoutes);
   app.use('/api/health', healthRoutes);
+  app.use('/api/debug', debugRoutes);
 
   // 404
   app.use((req, res) => {
