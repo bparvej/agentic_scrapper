@@ -47,8 +47,13 @@ router.get('/:symbol', async (req, res) => {
           { year: '2024', dividend: '100% Cash, 5% Stock', agm_date: '2025-04-20', record_date: '2025-03-05' }
         ]),
         announcements: JSON.stringify([
-          { date: new Date().toLocaleDateString(), title: 'Quarterly Earnings Report', description: 'The company reported a 20% increase in Q3 revenue compared to the same period last year.' },
-          { date: 'Recent', title: 'Board Meeting Scheduled', description: 'A board meeting is scheduled next week to discuss dividend disbursements.' }
+          { date: new Date().toLocaleDateString(), title: 'Q3 Financials Published', description: 'The company reported a 20% increase in Q3 revenue compared to the same period last year. Net profit stood at 15.2 mn.' },
+          { date: '2025-08-15', title: 'Board Meeting Scheduled', description: 'A board meeting is scheduled next week to discuss dividend disbursements and Q3 unaudited financials.' },
+          { date: '2025-05-10', title: 'Half Yearly Earnings Report', description: 'EPS was reported as Tk 1.45 for Jan-Jun 2025 as against Tk 1.20 for Jan-Jun 2024.' },
+          { date: '2025-04-20', title: 'Credit Rating', description: 'Credit Rating Information and Services Limited (CRISL) has assigned rating A+ in the long term.' },
+          { date: '2025-02-15', title: 'Q1 Financials Published', description: 'First quarter EPS was reported at Tk 0.65.' },
+          { date: '2025-01-10', title: 'Dividend Disbursement', description: 'The company has informed that it has disbursed the cash dividend for the year ended 2024 to the respective shareholders.' },
+          { date: '2024-12-05', title: 'AGM Notice', description: 'The 15th Annual General Meeting will be held virtually on Dec 25, 2024.' }
         ]),
         financial_performance_audited: JSON.stringify([
           { year: '2023', eps: '2.45', navps: '15.60', npat: '124.50' },

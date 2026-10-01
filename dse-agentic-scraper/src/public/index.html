@@ -456,6 +456,9 @@
 
                 <!-- Demo Financials Tab -->
                 <div id="demo-financials" class="inner-tab-content">
+                    <div class="instruments-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(3, 1fr);" id="demoFinancialCards">
+                        <!-- Populated by JS -->
+                    </div>
                     <h4 style="margin-bottom: 1rem; color: var(--accent-secondary);">Interim Financial Performance</h4>
                     <div style="overflow-x: auto; margin-bottom: 2rem;">
                         <table>
@@ -529,6 +532,9 @@
 
                 <!-- DB Financials Tab -->
                 <div id="db-financials" class="inner-tab-content">
+                    <div class="instruments-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(3, 1fr);" id="dbFinancialCards">
+                        <!-- Populated by JS -->
+                    </div>
                     <h4 style="margin-bottom: 1rem; color: var(--accent-secondary);">Interim Financial Performance</h4>
                     <div style="overflow-x: auto; margin-bottom: 2rem;">
                         <table>
@@ -792,6 +798,35 @@
                 }
             } catch(e) { intHTML = '<tr><td style="text-align:center; color:var(--text-muted);">Error loading interim data</td></tr>'; }
 
+            // Populate 6 Financial Cards for Demo
+            const demoCardsHTML = `
+                <div class="instrument-card" style="padding:1rem;">
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Basic EPS</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.eps || 'N/A'}</div>
+                </div>
+                <div class="instrument-card" style="padding:1rem;">
+                    <div style="font-size:0.85rem; color:var(--text-muted);">NAVPS</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.navps || 'N/A'}</div>
+                </div>
+                <div class="instrument-card" style="padding:1rem;">
+                    <div style="font-size:0.85rem; color:var(--text-muted);">NOCFPS</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.operatingCashFlow || '-'}</div>
+                </div>
+                <div class="instrument-card" style="padding:1rem;">
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Profit for the Period</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">${fData.profit || '-'} mn</div>
+                </div>
+                <div class="instrument-card" style="padding:1rem;">
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Total Securities</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">${(fData.total_securities || 0).toLocaleString()}</div>
+                </div>
+                <div class="instrument-card" style="padding:1rem;">
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Paid-up Capital</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">৳${(mData.paid_up_capital || 0).toLocaleString()}</div>
+                </div>
+            `;
+            document.getElementById('demoFinancialCards').innerHTML = demoCardsHTML;
+
             document.getElementById('demoAuditedBody').innerHTML = audHTML;
             document.getElementById('demoInterimBody').innerHTML = intHTML;
         }
@@ -842,6 +877,35 @@
                         <td>${fData.pe_ratio || 'N/A'}</td>
                     </tr>
                 `;
+
+                // Populate 6 Financial Cards for DB View
+                const dbCardsHTML = `
+                    <div class="instrument-card" style="padding:1rem;">
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Basic EPS</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.eps || 'N/A'}</div>
+                    </div>
+                    <div class="instrument-card" style="padding:1rem;">
+                        <div style="font-size:0.85rem; color:var(--text-muted);">NAVPS</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.navps || 'N/A'}</div>
+                    </div>
+                    <div class="instrument-card" style="padding:1rem;">
+                        <div style="font-size:0.85rem; color:var(--text-muted);">NOCFPS</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.operatingCashFlow || '-'}</div>
+                    </div>
+                    <div class="instrument-card" style="padding:1rem;">
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Profit for the Period</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">${fData.profit || '-'} mn</div>
+                    </div>
+                    <div class="instrument-card" style="padding:1rem;">
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Total Securities</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">${(fData.total_securities || 0).toLocaleString()}</div>
+                    </div>
+                    <div class="instrument-card" style="padding:1rem;">
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Paid-up Capital</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">৳${(mData.paid_up_capital || 0).toLocaleString()}</div>
+                    </div>
+                `;
+                document.getElementById('dbFinancialCards').innerHTML = dbCardsHTML;
 
                 // Render Audited Financials
                 let audData = inst.financial_performance_audited;
