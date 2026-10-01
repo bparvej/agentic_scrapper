@@ -98,6 +98,10 @@ const NormalizedInstrumentSchema = z.object({
   agmDate: z.string().nullable().optional(),       // ISO date
   yearEnded: z.string().nullable().optional(),
   dividendYear: z.string().nullable().optional(),
+  corporateActions: z.array(z.record(z.unknown())).optional().default([]),
+  interimFinancialPerformance: z.array(z.record(z.unknown())).optional().default([]),
+  financialPerformanceAudited: z.array(z.record(z.unknown())).optional().default([]),
+  announcements: z.array(z.record(z.unknown())).optional().default([]),
 
   // Debt
   shortTermLoan: z.number().nullable().optional(),
