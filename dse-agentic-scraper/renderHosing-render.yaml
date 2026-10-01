@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: dse-agentic-scraper
+    env: docker
+    plan: free
+    region: oregon # or frankfurt, ohio, singapore depending on your preference
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
