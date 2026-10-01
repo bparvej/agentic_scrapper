@@ -457,19 +457,18 @@
                 <!-- Demo Financials Tab -->
                 <div id="demo-financials" class="inner-tab-content">
                     <h4 style="margin-bottom: 1rem; color: var(--accent-secondary);">Interim Financial Performance</h4>
-                    <table style="margin-bottom: 2rem;">
-                        <thead>
-                            <tr>
-                                <th>Quarter</th>
-                                <th>EPS (Cont.)</th>
-                                <th>EPS (Diluted)</th>
-                                <th>NAVPS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="demoInterimBody">
-                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
-                        </tbody>
-                    </table>
+                    <div style="overflow-x: auto; margin-bottom: 2rem;">
+                        <table>
+                            <thead id="demoInterimHead">
+                                <tr>
+                                    <th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="demoInterimBody">
+                                <tr><td style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">Financial Performance as per Audited Financial Statements</h4>
                     <table>
@@ -531,19 +530,18 @@
                 <!-- DB Financials Tab -->
                 <div id="db-financials" class="inner-tab-content">
                     <h4 style="margin-bottom: 1rem; color: var(--accent-secondary);">Interim Financial Performance</h4>
-                    <table style="margin-bottom: 2rem;">
-                        <thead>
-                            <tr>
-                                <th>Quarter</th>
-                                <th>EPS (Cont.)</th>
-                                <th>EPS (Diluted)</th>
-                                <th>NAVPS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dbInterimBody">
-                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No interim data</td></tr>
-                        </tbody>
-                    </table>
+                    <div style="overflow-x: auto; margin-bottom: 2rem;">
+                        <table>
+                            <thead id="dbInterimHead">
+                                <tr>
+                                    <th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="dbInterimBody">
+                                <tr><td style="text-align:center; color:var(--text-muted);">No interim data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">Financial Performance as per Audited Financial Statements</h4>
                     <table>
@@ -777,12 +775,22 @@
             } catch(e) { audHTML = `<tr><td>N/A</td><td>${fData.eps || '-'}</td><td>${fData.navps || '-'}</td><td>-</td></tr>`; }
 
             try {
-                const intArr = typeof interimData === 'string' ? JSON.parse(interimData) : (interimData || []);
-                if (intArr.length === 0) intHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No interim data currently scraped</td></tr>';
-                intArr.forEach(row => {
-                    intHTML += `<tr><td>${row.quarter || '-'}</td><td>${row.eps_cont || '-'}</td><td>${row.eps_diluted || '-'}</td><td>${row.navps || '-'}</td></tr>`;
-                });
-            } catch(e) { intHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No interim data currently scraped</td></tr>'; }
+                const intObj = typeof interimData === 'string' ? JSON.parse(interimData) : (interimData || null);
+                if (!intObj || !intObj.periods) {
+                    intHTML = '<tr><td style="text-align:center; color:var(--text-muted);">No interim data currently scraped</td></tr>';
+                } else {
+                    let headHTML = '<tr><th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>';
+                    intObj.periods.forEach(p => headHTML += `<th>${p}</th>`);
+                    headHTML += '</tr>';
+                    document.getElementById('demoInterimHead').innerHTML = headHTML;
+                    
+                    intObj.rows.forEach(row => {
+                        intHTML += `<tr><td style="color:var(--accent-secondary);">${row.particulars}</td>`;
+                        row.values.forEach(v => intHTML += `<td>${v}</td>`);
+                        intHTML += '</tr>';
+                    });
+                }
+            } catch(e) { intHTML = '<tr><td style="text-align:center; color:var(--text-muted);">Error loading interim data</td></tr>'; }
 
             document.getElementById('demoAuditedBody').innerHTML = audHTML;
             document.getElementById('demoInterimBody').innerHTML = intHTML;
@@ -850,11 +858,19 @@
                 // Render Interim Financials
                 let intData = inst.interim_financial_performance;
                 if (typeof intData === 'string') { try { intData = JSON.parse(intData); } catch(e) {} }
-                let intHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No interim data</td></tr>';
-                if (intData && Array.isArray(intData) && intData.length > 0) {
+                let intHTML = '<tr><td style="text-align:center; color:var(--text-muted);">No interim data</td></tr>';
+                
+                if (intData && intData.periods && intData.rows) {
                     intHTML = '';
-                    intData.forEach(row => {
-                        intHTML += `<tr><td>${row.quarter || '-'}</td><td>${row.eps_cont || '-'}</td><td>${row.eps_diluted || '-'}</td><td>${row.navps || '-'}</td></tr>`;
+                    let headHTML = '<tr><th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>';
+                    intData.periods.forEach(p => headHTML += `<th>${p}</th>`);
+                    headHTML += '</tr>';
+                    document.getElementById('dbInterimHead').innerHTML = headHTML;
+
+                    intData.rows.forEach(row => {
+                        intHTML += `<tr><td style="color:var(--accent-secondary);">${row.particulars}</td>`;
+                        row.values.forEach(v => intHTML += `<td>${v}</td>`);
+                        intHTML += '</tr>';
                     });
                 }
                 document.getElementById('dbInterimBody').innerHTML = intHTML;

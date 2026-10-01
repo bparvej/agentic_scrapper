@@ -55,11 +55,16 @@ router.get('/:symbol', async (req, res) => {
           { year: '2022', eps: '2.10', navps: '14.20', npat: '110.20' },
           { year: '2021', eps: '1.95', navps: '13.50', npat: '95.40' }
         ]),
-        interim_financial_performance: JSON.stringify([
-          { quarter: 'Q1', eps_cont: '0.65', eps_diluted: '0.65', navps: '16.00' },
-          { quarter: 'Q2', eps_cont: '0.70', eps_diluted: '0.70', navps: '16.40' },
-          { quarter: 'Q3', eps_cont: '0.85', eps_diluted: '0.85', navps: '17.10' }
-        ])
+        interim_financial_performance: JSON.stringify({
+          periods: ['Q1', 'Q2', 'Half Yearly', 'Q3', '9 Months', 'Annual'],
+          rows: [
+            { particulars: 'Earnings Per Share (EPS) Basic', values: ['-0.02', '-0.07', '-0.09', '-0.07', '-0.17', '-'] },
+            { particulars: 'Earnings Per Share (EPS) Diluted*', values: ['-', '-', '-', '-', '-', '-'] },
+            { particulars: 'EPS - Continuing Operations Basic', values: ['-0.02', '-0.07', '-0.09', '-0.07', '-0.17', '-'] },
+            { particulars: 'EPS - Continuing Operations Diluted*', values: ['-', '-', '-', '-', '-', '-'] },
+            { particulars: 'Market price per share at period end', values: ['19.10', '28.90', '28.90', '42.90', '42.90', '-'] }
+          ]
+        })
       },
       marketData: {
         last_trade_price: 250.50,
