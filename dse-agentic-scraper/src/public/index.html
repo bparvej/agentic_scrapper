@@ -268,6 +268,55 @@
             color: #60a5fa;
         }
 
+        /* Inner Tabs for Data Display */
+        .inner-tabs-nav {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .inner-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .inner-tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .inner-tab-btn.active {
+            color: var(--accent-primary);
+        }
+
+        .inner-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -0.6rem;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        .inner-tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .inner-tab-content.active {
+            display: block;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -376,40 +425,51 @@
                 </div>
             </div>
 
-            <!-- Results Table -->
+            <!-- Results Table (Tabbed View) -->
             <div class="data-table-container" id="resultsTable">
-                <h3 style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                    Extracted Market Data
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0;">Extraction Results</h3>
                     <span class="tag" id="strategyTag">Strategy: Unknown</span>
-                </h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
-                            <th>Metric</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="marketDataBody">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
+                </div>
                 
-                <h3 style="margin-top: 2rem; margin-bottom: 1.5rem;">Financial Data</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
-                            <th>Metric</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="financialDataBody">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
+                <div class="inner-tabs-nav">
+                    <button class="inner-tab-btn active" onclick="switchInnerTab('demo-overview', this)">Overview</button>
+                    <button class="inner-tab-btn" onclick="switchInnerTab('demo-financials', this)">Financials</button>
+                </div>
+
+                <!-- Demo Overview Tab -->
+                <div id="demo-overview" class="inner-tab-content active">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Metric</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="marketDataBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Demo Financials Tab -->
+                <div id="demo-financials" class="inner-tab-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Metric</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financialDataBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -436,26 +496,30 @@
             <div id="instrumentsLoading" style="display: none; color: var(--text-muted); text-align: center; margin: 2rem 0;"><div class="loader"></div> Querying Database...</div>
             <div id="instrumentsError" style="display: none; color: var(--error); background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; border: 1px solid var(--error);"></div>
             
-            <div id="instrumentDetailContainer" style="display: none;">
-                <!-- Financials & Market Cap -->
-                <div class="data-table-container" style="display: block; margin-bottom: 2rem;">
-                    <h3 style="margin-bottom: 1.5rem; color: var(--accent-primary);">Market & Financial Data</h3>
+            <div id="instrumentDetailContainer" style="display: none; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 1rem; padding: 2rem;">
+                
+                <div class="inner-tabs-nav">
+                    <button class="inner-tab-btn active" onclick="switchInnerTab('db-overview', this)">Overview</button>
+                    <button class="inner-tab-btn" onclick="switchInnerTab('db-corporate', this)">Corporate Actions</button>
+                    <button class="inner-tab-btn" onclick="switchInnerTab('db-news', this)">News</button>
+                </div>
+
+                <!-- DB Overview Tab -->
+                <div id="db-overview" class="inner-tab-content active">
                     <table>
                         <tbody id="dbMarketBody"></tbody>
                     </table>
                 </div>
 
-                <!-- Corporate Actions -->
-                <div class="data-table-container" style="display: block; margin-bottom: 2rem; border-color: var(--accent-secondary);">
-                    <h3 style="margin-bottom: 1.5rem; color: var(--accent-secondary);">Corporate Actions & Dividends</h3>
+                <!-- DB Corporate Actions Tab -->
+                <div id="db-corporate" class="inner-tab-content">
                     <div id="dbCorporateActionsBody">
                         <p style="color: var(--text-muted);">No corporate actions recorded in the database yet.</p>
                     </div>
                 </div>
 
-                <!-- News & Announcements -->
-                <div class="data-table-container" style="display: block; border-color: var(--success);">
-                    <h3 style="margin-bottom: 1.5rem; color: var(--success);">Recent News & Announcements</h3>
+                <!-- DB News Tab -->
+                <div id="db-news" class="inner-tab-content">
                     <div id="dbNewsBody">
                         <p style="color: var(--text-muted);">No news announcements recorded in the database yet.</p>
                     </div>
@@ -493,6 +557,16 @@
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
             if (tabId === 'data') loadInstrumentDetails();
+        }
+
+        // --- Inner Tabs ---
+        function switchInnerTab(tabId, btnEl) {
+            const container = btnEl.closest('.data-table-container') || btnEl.closest('#instrumentDetailContainer');
+            container.querySelectorAll('.inner-tab-content').forEach(el => el.classList.remove('active'));
+            container.querySelectorAll('.inner-tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            btnEl.classList.add('active');
         }
 
         // --- Live Demo Agentic Workflow Simulation ---
