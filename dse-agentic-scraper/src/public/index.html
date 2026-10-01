@@ -514,7 +514,14 @@
                     <!-- Card 5 -->
                     <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
                         <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">P/E Ratio based on latest Un-audited Financial Statements</h4>
-                        <div style="font-size:1.5rem; font-weight:700; color:var(--accent-secondary);" id="demoPeUnaudited">Fetching...</div>
+                        <div id="demoPeUnaudited">Fetching...</div>
+                        <h5 style="margin-top:1.5rem; margin-bottom:0.5rem; color:var(--text-muted); font-size:0.85rem;">30-Day P/E Trend (Unaudited vs Audited)</h5>
+                        <div style="overflow-x:auto;">
+                            <table style="font-size:0.82rem;">
+                                <thead><tr><th>Date</th><th>Unaudited P/E</th><th>Audited P/E</th></tr></thead>
+                                <tbody id="demoPeTrendBody"><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Fetching...</td></tr></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Card 6 -->
@@ -618,7 +625,14 @@
                     <!-- Card 5 -->
                     <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
                         <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">P/E Ratio based on latest Un-audited Financial Statements</h4>
-                        <div style="font-size:1.5rem; font-weight:700; color:var(--accent-secondary);" id="dbPeUnaudited">-</div>
+                        <div id="dbPeUnaudited">-</div>
+                        <h5 style="margin-top:1.5rem; margin-bottom:0.5rem; color:var(--text-muted); font-size:0.85rem;">30-Day P/E Trend (Unaudited vs Audited)</h5>
+                        <div style="overflow-x:auto;">
+                            <table style="font-size:0.82rem;">
+                                <thead><tr><th>Date</th><th>Unaudited P/E</th><th>Audited P/E</th></tr></thead>
+                                <tbody id="dbPeTrendBody"><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">-</td></tr></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Card 6 -->
@@ -955,38 +969,81 @@
                 document.getElementById('demoFinContBody').innerHTML = contHTML;
             } catch(e) {}
 
-            // Card 5: P/E Unaudited
-            const puTable = inst2.pe_unaudited_table;
-            const puObj = typeof puTable === 'string' ? JSON.parse(puTable || 'null') : puTable;
-            if (puObj && puObj.dates && puObj.basic) {
-                const lastDate = puObj.dates[puObj.dates.length - 1];
-                const lastBasic = puObj.basic[puObj.basic.length - 1];
-                document.getElementById('demoPeUnaudited').innerHTML = `
-                    <div style="font-size:2rem;font-weight:800;">${lastBasic != null ? lastBasic.toFixed(2) : 'N/A'}</div>
-                    <div style="font-size:0.85rem;color:var(--text-muted);">As of ${lastDate}</div>
-                `;
-            } else {
-                document.getElementById('demoPeUnaudited').innerText = inst2.latest_pe_unaudited != null ? parseFloat(inst2.latest_pe_unaudited).toFixed(2) : 'N/A';
-            }
-
-            // Card 6: P/E Audited
-            const paTable = inst2.pe_audited_table;
-            const paObj = typeof paTable === 'string' ? JSON.parse(paTable || 'null') : paTable;
-            if (paObj && Array.isArray(paObj.basic)) {
-                const lastDate = Array.isArray(puObj?.dates) ? puObj.dates[puObj.dates.length - 1] : '-';
-                const lastBasic = paObj.basic[paObj.basic.length - 1];
-                const lastDiluted = Array.isArray(paObj.diluted) ? paObj.diluted[paObj.diluted.length - 1] : null;
-                document.getElementById('demoPeAudited').innerHTML = `
-                    <div style="font-size:2rem;font-weight:800;">${lastBasic != null ? lastBasic.toFixed(2) : 'N/A'}</div>
-                    ${lastDiluted != null ? `<div style="font-size:0.9rem;color:var(--text-muted);">Diluted: ${lastDiluted.toFixed(2)}</div>` : ''}
-                    <div style="font-size:0.85rem;color:var(--text-muted);">As of ${lastDate}</div>
-                `;
-            } else {
-                document.getElementById('demoPeAudited').innerText = inst2.latest_pe_audited != null ? parseFloat(inst2.latest_pe_audited).toFixed(2) : 'N/A';
-            }
+            // Cards 5 & 6: P/E tables with history
+            renderPeCards(
+                inst2,
+                'demoPeUnaudited',
+                'demoPeAudited',
+                'demoPeTrendBody'
+            );
 
             document.getElementById('demoAuditedBody').innerHTML = audHTML;
             document.getElementById('demoInterimBody').innerHTML = intHTML;
+        }
+
+        /**
+         * Shared renderer for Cards 5 & 6
+         * Reads peUnauditedTable, peAuditedTable, peTrend from the instrument object
+         * and renders them into the given element IDs.
+         */
+        function renderPeCards(inst, peUnEl, peAudEl, trendEl) {
+            // --- Card 5: P/E Unaudited ---
+            const puRaw = inst.pe_unaudited_table;
+            const puObj = typeof puRaw === 'string' ? tryParse(puRaw) : puRaw;
+            const puHTML = buildPeTableHTML(puObj, ['Date', 'Basic', 'Trailing'], r => [r.date, r.basic, r.trailing]);
+            document.getElementById(peUnEl).innerHTML = puHTML;
+
+            // --- Card 6: P/E Audited ---
+            const paRaw = inst.pe_audited_table;
+            const paObj = typeof paRaw === 'string' ? tryParse(paRaw) : paRaw;
+            const paHTML = buildPeTableHTML(paObj, ['Date', 'Basic', 'Diluted'], r => [r.date, r.basic, r.diluted]);
+            document.getElementById(peAudEl).innerHTML = paHTML;
+
+            // --- Shared 30-day trend table (shown in Card 5 only) ---
+            if (trendEl) {
+                const trendRaw = inst.pe_trend;
+                const trend = typeof trendRaw === 'string' ? tryParse(trendRaw) : trendRaw;
+                if (Array.isArray(trend) && trend.length > 0) {
+                    let rows = '';
+                    trend.forEach(t => {
+                        rows += `<tr><td>${t.date||'-'}</td><td>${t.unaudited||'-'}</td><td>${t.audited||'-'}</td></tr>`;
+                    });
+                    document.getElementById(trendEl).innerHTML = rows;
+                } else {
+                    document.getElementById(trendEl).innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No trend data</td></tr>';
+                }
+            }
+        }
+
+        function buildPeTableHTML(obj, headers, rowFn) {
+            if (!obj || !Array.isArray(obj.rows) || obj.rows.length === 0) {
+                const latest = obj?.latestBasic != null ? parseFloat(obj.latestBasic).toFixed(2) : 'N/A';
+                const latestDate = obj?.latestDate || '-';
+                return `<div style="font-size:2rem;font-weight:800;color:var(--accent-secondary);">${latest}</div><div style="font-size:0.8rem;color:var(--text-muted);">As of ${latestDate}</div>`;
+            }
+            const latest = obj.rows[obj.rows.length - 1];
+            let html = `
+                <div style="display:flex; align-items:baseline; gap:1rem; margin-bottom:1rem;">
+                    <div style="font-size:2.2rem;font-weight:800;color:var(--accent-secondary);">${rowFn(latest)[1] ?? '-'}</div>
+                    <div style="font-size:0.85rem;color:var(--text-muted);">Basic &nbsp;|&nbsp; As of ${latest.date ?? '-'}</div>
+                    ${rowFn(latest)[2] != null && rowFn(latest)[2] !== '-' ? `<div style="font-size:0.9rem;color:var(--accent-primary);">Diluted: ${rowFn(latest)[2]}</div>` : ''}
+                </div>
+                <div style="overflow-x:auto;">
+                <table style="font-size:0.85rem;">
+                    <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                    <tbody>
+            `;
+            // Show all rows in reverse (most recent first)
+            [...obj.rows].reverse().forEach(r => {
+                const cells = rowFn(r);
+                html += `<tr>${cells.map(c => `<td>${c ?? '-'}</td>`).join('')}</tr>`;
+            });
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function tryParse(s) {
+            try { return JSON.parse(s); } catch(e) { return null; }
         }
 
         // --- Scraped Data Menu ---
@@ -1108,36 +1165,13 @@
                 }
                 document.getElementById('dbFinContBody').innerHTML = contHTML;
 
-                // Card 5: P/E Unaudited
-                const dbPuTable = inst.pe_unaudited_table;
-                const dbPuObj = typeof dbPuTable === 'string' ? JSON.parse(dbPuTable || 'null') : dbPuTable;
-                if (dbPuObj && dbPuObj.dates && dbPuObj.basic) {
-                    const lastDate = dbPuObj.dates[dbPuObj.dates.length - 1];
-                    const lastBasic = dbPuObj.basic[dbPuObj.basic.length - 1];
-                    document.getElementById('dbPeUnaudited').innerHTML = `
-                        <div style="font-size:2rem;font-weight:800;">${lastBasic != null ? lastBasic.toFixed(2) : 'N/A'}</div>
-                        <div style="font-size:0.85rem;color:var(--text-muted);">As of ${lastDate}</div>
-                    `;
-                } else {
-                    document.getElementById('dbPeUnaudited').innerText = inst.latest_pe_unaudited != null ? parseFloat(inst.latest_pe_unaudited).toFixed(2) : 'N/A';
-                }
-
-                // Card 6: P/E Audited
-                const dbPaTable = inst.pe_audited_table;
-                const dbPaObj = typeof dbPaTable === 'string' ? JSON.parse(dbPaTable || 'null') : dbPaTable;
-                if (dbPaObj && Array.isArray(dbPaObj.basic)) {
-                    const lastDate = dbPuObj?.dates ? dbPuObj.dates[dbPuObj.dates.length - 1] : '-';
-                    const lastBasic = dbPaObj.basic[dbPaObj.basic.length - 1];
-                    const lastDiluted = Array.isArray(dbPaObj.diluted) ? dbPaObj.diluted[dbPaObj.diluted.length - 1] : null;
-                    document.getElementById('dbPeAudited').innerHTML = `
-                        <div style="font-size:2rem;font-weight:800;">${lastBasic != null ? lastBasic.toFixed(2) : 'N/A'}</div>
-                        ${lastDiluted != null ? `<div style="font-size:0.9rem;color:var(--text-muted);">Diluted: ${lastDiluted.toFixed(2)}</div>` : ''}
-                        <div style="font-size:0.85rem;color:var(--text-muted);">As of ${lastDate}</div>
-                    `;
-                } else {
-                    document.getElementById('dbPeAudited').innerText = inst.latest_pe_audited != null ? parseFloat(inst.latest_pe_audited).toFixed(2) : 'N/A';
-                }
-
+                // Cards 5 & 6: P/E tables with history
+                renderPeCards(
+                    inst,
+                    'dbPeUnaudited',
+                    'dbPeAudited',
+                    'dbPeTrendBody'
+                );
                 // Render Corporate Actions (Parse JSON if string)
                 let corpActionsHTML = '<p style="color: var(--text-muted);">No corporate actions recorded in the database yet.</p>';
                 let corpData = inst.corporate_actions;

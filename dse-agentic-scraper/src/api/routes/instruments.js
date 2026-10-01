@@ -64,6 +64,7 @@ router.get('/:symbol', async (req, res) => {
           pe_audited_table: JSON.stringify(d.peAuditedTable),
           latest_pe_unaudited: d.latestPeUnaudited,
           latest_pe_audited: d.latestPeAudited,
+          pe_trend: JSON.stringify(d.peTrend || []),
           // Extra
           dividend_history: JSON.stringify(d.dividendHistory),
           announcements: JSON.stringify([]),
@@ -91,6 +92,7 @@ router.get('/:symbol', async (req, res) => {
           dividend_yield: d.dividendYield,
           latest_pe_unaudited: d.latestPeUnaudited,
           latest_pe_audited: d.latestPeAudited,
+          pe_trend: JSON.stringify(d.peTrend || []),
         },
         _source: 'live_dse_scrape',
       });

@@ -184,16 +184,66 @@ function normalise(c, symbol) {
   }));
 
   /* -------- P/E tables (Cards 5 & 6) -------- */
-  const peUnauditedTable = c.peUnauditedTable || null;
-  const peAuditedTable   = c.peAuditedTable   || null;
+  // DSE uses RSC cross-references: peAuditedTable.dates is a string reference
+  // pointing to peUnauditedTable.dates — we resolve it here.
+  const rawPeUnaudited = c.peUnauditedTable || null;
+  const rawPeAudited   = c.peAuditedTable   || null;
 
-  // Latest values from the tables
-  const latestPeUnaudited = Array.isArray(peUnauditedTable?.basic)
-    ? peUnauditedTable.basic[peUnauditedTable.basic.length - 1]
+  // Resolve the shared dates array (peAuditedTable.dates is a reference string)
+  const sharedDates = Array.isArray(rawPeUnaudited?.dates)
+    ? rawPeUnaudited.dates
     : null;
-  const latestPeAudited = Array.isArray(peAuditedTable?.basic)
-    ? peAuditedTable.basic[peAuditedTable.basic.length - 1]
-    : null;
+
+  // Build normalised unaudited table: dates + basic + diluted + trailing
+  let peUnauditedTable = null;
+  if (rawPeUnaudited && Array.isArray(rawPeUnaudited.basic)) {
+    const dates   = sharedDates || rawPeUnaudited.dates || [];
+    const basic   = rawPeUnaudited.basic   || [];
+    const diluted = rawPeUnaudited.diluted || [];
+    const trailing= rawPeUnaudited.trailing|| [];
+    peUnauditedTable = {
+      dates,
+      rows: dates.map((d, i) => ({
+        date:     d                                            ?? '-',
+        basic:    basic[i]    != null ? basic[i].toFixed(2)   : '-',
+        diluted:  diluted[i]  != null ? diluted[i].toFixed(2) : '-',
+        trailing: trailing[i] != null ? trailing[i].toFixed(2): '-',
+      })),
+      latestBasic:    basic.length   ? (basic[basic.length - 1]     ?? null) : null,
+      latestDiluted:  diluted.length ? (diluted.filter(v => v != null).pop() ?? null) : null,
+      latestDate:     dates.length   ? dates[dates.length - 1]                : '-',
+    };
+  }
+
+  // Build normalised audited table using the same shared dates
+  let peAuditedTable = null;
+  if (rawPeAudited && Array.isArray(rawPeAudited.basic)) {
+    const dates   = sharedDates || [];
+    const basic   = rawPeAudited.basic   || [];
+    const diluted = rawPeAudited.diluted || [];
+    peAuditedTable = {
+      dates,
+      rows: dates.map((d, i) => ({
+        date:    d                                           ?? '-',
+        basic:   basic[i]   != null ? basic[i].toFixed(2)   : '-',
+        diluted: diluted[i] != null ? diluted[i].toFixed(2) : '-',
+      })),
+      latestBasic:   basic.length   ? (basic[basic.length - 1]      ?? null) : null,
+      latestDiluted: diluted.length ? (diluted.filter(v => v != null).pop() ?? null) : null,
+      latestDate:    sharedDates?.length ? sharedDates[sharedDates.length - 1] : '-',
+    };
+  }
+
+  // Also include peTrend (30-day historical audited vs unaudited)
+  // Format: [{ date, audited, unaudited }, ...]
+  const peTrend = (c.peTrend || []).map(t => ({
+    date:      t.date      ?? '-',
+    audited:   t.audited   != null ? Number(t.audited).toFixed(2)   : '-',
+    unaudited: t.unaudited != null ? Number(t.unaudited).toFixed(2) : '-',
+  }));
+
+  const latestPeUnaudited = peUnauditedTable?.latestBasic ?? null;
+  const latestPeAudited   = peAuditedTable?.latestBasic   ?? null;
 
   /* -------- Share ownership -------- */
   const latestPattern = (c.sharePattern || []).slice(-1)[0]?.pattern || {};
@@ -251,6 +301,8 @@ function normalise(c, symbol) {
     // === Card 6 ===
     peAuditedTable,
     latestPeAudited,
+    // === Shared P/E History (used in both Cards 5 & 6) ===
+    peTrend,
     // Extra
     dividendHistory:  c.dividendHistory   || [],
     description:      c.description       || null,
