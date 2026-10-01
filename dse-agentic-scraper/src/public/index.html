@@ -533,15 +533,8 @@
             
             <div class="controls-card">
                 <div class="url-box">
-                    <div class="url-prefix">Select Instrument</div>
-                    <select id="dbSymbolSelect">
-                        <option value="GP">GP (Grameenphone Ltd.)</option>
-                        <option value="BATBC">BATBC (British American Tobacco)</option>
-                        <option value="SQURPHARMA">SQURPHARMA (Square Pharma)</option>
-                        <option value="BEXIMCO">BEXIMCO</option>
-                        <option value="RENATA">RENATA</option>
-                        <option value="WALTONHIL">WALTONHIL</option>
-                    </select>
+                    <div class="url-prefix">DSE Symbol</div>
+                    <input id="dbSymbolInput" type="text" placeholder="e.g. WALTONHIL, GP, BATBC..." value="WALTONHIL" style="background:transparent;border:none;outline:none;color:var(--text-primary);font-size:1rem;width:100%;" />
                 </div>
                 <button class="btn-primary" onclick="loadInstrumentDetails()">Fetch Data</button>
             </div>
@@ -998,7 +991,7 @@
 
         // --- Scraped Data Menu ---
         async function loadInstrumentDetails() {
-            const symbol = document.getElementById('dbSymbolSelect').value;
+            const symbol = (document.getElementById('dbSymbolInput')?.value || '').trim().toUpperCase() || 'WALTONHIL';
             const container = document.getElementById('instrumentDetailContainer');
             const loader = document.getElementById('instrumentsLoading');
             const errorBox = document.getElementById('instrumentsError');
@@ -1043,76 +1036,107 @@
                     </tr>
                 `;
 
-                // Populate 6 Financial Cards for DB View
-                const dbCardsHTML = `
+                // Card 1: Financial Snapshot
+                document.getElementById('dbFinancialCards').innerHTML = `
                     <div class="instrument-card" style="padding:1rem;">
-                        <div style="font-size:0.85rem; color:var(--text-muted);">Basic EPS</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.eps || 'N/A'}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Basic EPS (Tk)</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--accent-primary);">${fData.eps ?? 'N/A'}</div>
                     </div>
                     <div class="instrument-card" style="padding:1rem;">
-                        <div style="font-size:0.85rem; color:var(--text-muted);">NAVPS</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.navps || 'N/A'}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">NAV per Share</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--accent-primary);">${fData.nav ?? 'N/A'}</div>
                     </div>
                     <div class="instrument-card" style="padding:1rem;">
-                        <div style="font-size:0.85rem; color:var(--text-muted);">NOCFPS</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-primary);">${fData.operatingCashFlow || '-'}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">P/E Ratio</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--accent-primary);">${fData.pe_ratio != null ? parseFloat(fData.pe_ratio).toFixed(2) : 'N/A'}</div>
                     </div>
                     <div class="instrument-card" style="padding:1rem;">
-                        <div style="font-size:0.85rem; color:var(--text-muted);">Profit for the Period</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">${fData.profit || '-'} mn</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Dividend Yield</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--accent-secondary);">${fData.dividend_yield ?? 'N/A'}%</div>
                     </div>
                     <div class="instrument-card" style="padding:1rem;">
-                        <div style="font-size:0.85rem; color:var(--text-muted);">Total Securities</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">${(fData.total_securities || 0).toLocaleString()}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Market Cap (৳)</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--accent-secondary);">${mData.market_cap ? (mData.market_cap/1e9).toFixed(2)+' B' : 'N/A'}</div>
                     </div>
                     <div class="instrument-card" style="padding:1rem;">
-                        <div style="font-size:0.85rem; color:var(--text-muted);">Paid-up Capital</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:var(--accent-secondary);">৳${(mData.paid_up_capital || 0).toLocaleString()}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Paid-up Capital (mn)</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--accent-secondary);">${inst.paid_up_capital != null ? parseFloat(inst.paid_up_capital).toLocaleString() : 'N/A'}</div>
                     </div>
                 `;
-                document.getElementById('dbFinancialCards').innerHTML = dbCardsHTML;
 
-                // Render Audited Financials
-                let audData = inst.financial_performance_audited;
-                if (typeof audData === 'string') { try { audData = JSON.parse(audData); } catch(e) {} }
-                let audHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No audited data</td></tr>';
-                if (audData && Array.isArray(audData) && audData.length > 0) {
-                    audHTML = '';
-                    audData.forEach(row => {
-                        audHTML += `<tr><td>${row.year || '-'}</td><td>${row.eps || '-'}</td><td>${row.navps || '-'}</td><td>${row.npat || '-'}</td></tr>`;
-                    });
-                }
-                document.getElementById('dbAuditedBody').innerHTML = audHTML;
-
-                // Populate Card 4: Continued
-                document.getElementById('dbFinContBody').innerHTML = `
-                    <tr><td style="color:var(--accent-secondary);">Net Asset Value (mn)</td><td>${fData.navps ? (parseFloat(fData.navps) * parseFloat(inst.total_securities || 1000000) / 1000000).toFixed(2) : '-'}</td></tr>
-                    <tr><td style="color:var(--accent-secondary);">Outstanding Securities</td><td>${(inst.total_securities || 0).toLocaleString()}</td></tr>
-                `;
-
-                // Populate Card 5 & 6: P/E Ratios
-                document.getElementById('dbPeUnaudited').innerText = fData.pe_ratio || '15.42';
-                document.getElementById('dbPeAudited').innerText = fData.diluted_pe || '18.10';
-
-                // Render Interim Financials
+                // Card 2: Interim Financials
                 let intData = inst.interim_financial_performance;
                 if (typeof intData === 'string') { try { intData = JSON.parse(intData); } catch(e) {} }
                 let intHTML = '<tr><td style="text-align:center; color:var(--text-muted);">No interim data</td></tr>';
-                
                 if (intData && intData.periods && intData.rows) {
                     intHTML = '';
-                    let headHTML = '<tr><th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>';
-                    intData.periods.forEach(p => headHTML += `<th>${p}</th>`);
+                    let headHTML = '<tr><th>Particulars<br><span style="font-size:0.7rem;font-weight:400;">Unaudited / Audited</span></th>';
+                    intData.periods.forEach(p => headHTML += `<th style="white-space:pre-line;font-size:0.8rem;">${p}</th>`);
                     headHTML += '</tr>';
                     document.getElementById('dbInterimHead').innerHTML = headHTML;
-
                     intData.rows.forEach(row => {
-                        intHTML += `<tr><td style="color:var(--accent-secondary);">${row.particulars}</td>`;
+                        intHTML += `<tr><td style="color:var(--accent-secondary);min-width:200px;">${row.particulars}</td>`;
                         row.values.forEach(v => intHTML += `<td>${v}</td>`);
                         intHTML += '</tr>';
                     });
                 }
                 document.getElementById('dbInterimBody').innerHTML = intHTML;
+
+                // Card 3: Audited Financials
+                let audData = inst.financial_performance_audited;
+                if (typeof audData === 'string') { try { audData = JSON.parse(audData); } catch(e) {} }
+                let audHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted);">No audited data</td></tr>';
+                if (Array.isArray(audData) && audData.length > 0) {
+                    audHTML = '';
+                    document.getElementById('dbAuditedHead').innerHTML = `<tr><th>Year</th><th>EPS Basic</th><th>EPS Cont. Basic</th><th>EPS Diluted</th><th>NAV</th><th>Profit (mn)</th><th>P/E</th><th>Dividend %</th><th>Div Yield %</th></tr>`;
+                    audData.forEach(row => {
+                        audHTML += `<tr><td>${row.year||'-'}</td><td>${row.epsBasic||row.eps||'-'}</td><td>${row.epsContBasic||'-'}</td><td>${row.epsDiluted||'-'}</td><td>${row.nav||row.navps||'-'}</td><td>${row.profit||row.npat||'-'}</td><td>${row.pe||'-'}</td><td>${row.dividendPct||'-'}</td><td>${row.dividendYield||'-'}</td></tr>`;
+                    });
+                }
+                document.getElementById('dbAuditedBody').innerHTML = audHTML;
+
+                // Card 4: Continued
+                let contData = inst.financial_continued;
+                if (typeof contData === 'string') { try { contData = JSON.parse(contData); } catch(e) {} }
+                let contHTML = '<tr><td style="text-align:center; color:var(--text-muted);">No data</td></tr>';
+                if (Array.isArray(contData) && contData.length > 0) {
+                    document.getElementById('dbFinContHead').innerHTML = `<tr><th>Year</th><th>Comprehensive Income (mn)</th><th>Profit for Year (mn)</th><th>OCI</th><th>P/E Cont. Basic</th></tr>`;
+                    contHTML = '';
+                    contData.forEach(row => {
+                        contHTML += `<tr><td>${row.year||'-'}</td><td>${row.comprehensive||'-'}</td><td>${row.profitForYear||'-'}</td><td>${row.oci||'-'}</td><td>${row.peContBasic||'-'}</td></tr>`;
+                    });
+                }
+                document.getElementById('dbFinContBody').innerHTML = contHTML;
+
+                // Card 5: P/E Unaudited
+                const dbPuTable = inst.pe_unaudited_table;
+                const dbPuObj = typeof dbPuTable === 'string' ? JSON.parse(dbPuTable || 'null') : dbPuTable;
+                if (dbPuObj && dbPuObj.dates && dbPuObj.basic) {
+                    const lastDate = dbPuObj.dates[dbPuObj.dates.length - 1];
+                    const lastBasic = dbPuObj.basic[dbPuObj.basic.length - 1];
+                    document.getElementById('dbPeUnaudited').innerHTML = `
+                        <div style="font-size:2rem;font-weight:800;">${lastBasic != null ? lastBasic.toFixed(2) : 'N/A'}</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);">As of ${lastDate}</div>
+                    `;
+                } else {
+                    document.getElementById('dbPeUnaudited').innerText = inst.latest_pe_unaudited != null ? parseFloat(inst.latest_pe_unaudited).toFixed(2) : 'N/A';
+                }
+
+                // Card 6: P/E Audited
+                const dbPaTable = inst.pe_audited_table;
+                const dbPaObj = typeof dbPaTable === 'string' ? JSON.parse(dbPaTable || 'null') : dbPaTable;
+                if (dbPaObj && Array.isArray(dbPaObj.basic)) {
+                    const lastDate = dbPuObj?.dates ? dbPuObj.dates[dbPuObj.dates.length - 1] : '-';
+                    const lastBasic = dbPaObj.basic[dbPaObj.basic.length - 1];
+                    const lastDiluted = Array.isArray(dbPaObj.diluted) ? dbPaObj.diluted[dbPaObj.diluted.length - 1] : null;
+                    document.getElementById('dbPeAudited').innerHTML = `
+                        <div style="font-size:2rem;font-weight:800;">${lastBasic != null ? lastBasic.toFixed(2) : 'N/A'}</div>
+                        ${lastDiluted != null ? `<div style="font-size:0.9rem;color:var(--text-muted);">Diluted: ${lastDiluted.toFixed(2)}</div>` : ''}
+                        <div style="font-size:0.85rem;color:var(--text-muted);">As of ${lastDate}</div>
+                    `;
+                } else {
+                    document.getElementById('dbPeAudited').innerText = inst.latest_pe_audited != null ? parseFloat(inst.latest_pe_audited).toFixed(2) : 'N/A';
+                }
 
                 // Render Corporate Actions (Parse JSON if string)
                 let corpActionsHTML = '<p style="color: var(--text-muted);">No corporate actions recorded in the database yet.</p>';
