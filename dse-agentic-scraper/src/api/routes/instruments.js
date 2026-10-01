@@ -49,6 +49,16 @@ router.get('/:symbol', async (req, res) => {
         announcements: JSON.stringify([
           { date: new Date().toLocaleDateString(), title: 'Quarterly Earnings Report', description: 'The company reported a 20% increase in Q3 revenue compared to the same period last year.' },
           { date: 'Recent', title: 'Board Meeting Scheduled', description: 'A board meeting is scheduled next week to discuss dividend disbursements.' }
+        ]),
+        financial_performance_audited: JSON.stringify([
+          { year: '2023', eps: '2.45', navps: '15.60', npat: '124.50' },
+          { year: '2022', eps: '2.10', navps: '14.20', npat: '110.20' },
+          { year: '2021', eps: '1.95', navps: '13.50', npat: '95.40' }
+        ]),
+        interim_financial_performance: JSON.stringify([
+          { quarter: 'Q1', eps_cont: '0.65', eps_diluted: '0.65', navps: '16.00' },
+          { quarter: 'Q2', eps_cont: '0.70', eps_diluted: '0.70', navps: '16.40' },
+          { quarter: 'Q3', eps_cont: '0.85', eps_diluted: '0.85', navps: '17.10' }
         ])
       },
       marketData: {

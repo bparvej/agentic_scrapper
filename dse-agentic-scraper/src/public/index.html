@@ -456,17 +456,33 @@
 
                 <!-- Demo Financials Tab -->
                 <div id="demo-financials" class="inner-tab-content">
+                    <h4 style="margin-bottom: 1rem; color: var(--accent-secondary);">Interim Financial Performance</h4>
+                    <table style="margin-bottom: 2rem;">
+                        <thead>
+                            <tr>
+                                <th>Quarter</th>
+                                <th>EPS (Cont.)</th>
+                                <th>EPS (Diluted)</th>
+                                <th>NAVPS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="demoInterimBody">
+                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">Financial Performance as per Audited Financial Statements</h4>
                     <table>
                         <thead>
                             <tr>
-                                <th>Metric</th>
-                                <th>Value</th>
-                                <th>Metric</th>
-                                <th>Value</th>
+                                <th>Year</th>
+                                <th>EPS</th>
+                                <th>NAVPS</th>
+                                <th>NPAT (mn)</th>
                             </tr>
                         </thead>
-                        <tbody id="financialDataBody">
-                            <!-- Populated by JS -->
+                        <tbody id="demoAuditedBody">
+                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -500,6 +516,7 @@
                 
                 <div class="inner-tabs-nav">
                     <button class="inner-tab-btn active" onclick="switchInnerTab('db-overview', this)">Overview</button>
+                    <button class="inner-tab-btn" onclick="switchInnerTab('db-financials', this)">Financials</button>
                     <button class="inner-tab-btn" onclick="switchInnerTab('db-corporate', this)">Corporate Actions</button>
                     <button class="inner-tab-btn" onclick="switchInnerTab('db-news', this)">News</button>
                 </div>
@@ -508,6 +525,39 @@
                 <div id="db-overview" class="inner-tab-content active">
                     <table>
                         <tbody id="dbMarketBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- DB Financials Tab -->
+                <div id="db-financials" class="inner-tab-content">
+                    <h4 style="margin-bottom: 1rem; color: var(--accent-secondary);">Interim Financial Performance</h4>
+                    <table style="margin-bottom: 2rem;">
+                        <thead>
+                            <tr>
+                                <th>Quarter</th>
+                                <th>EPS (Cont.)</th>
+                                <th>EPS (Diluted)</th>
+                                <th>NAVPS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dbInterimBody">
+                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No interim data</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">Financial Performance as per Audited Financial Statements</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>EPS</th>
+                                <th>NAVPS</th>
+                                <th>NPAT (mn)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dbAuditedBody">
+                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No audited data</td></tr>
+                        </tbody>
                     </table>
                 </div>
 
@@ -711,26 +761,31 @@
                 </tr>
             `;
 
-            document.getElementById('financialDataBody').innerHTML = `
-                <tr>
-                    <td>EPS</td>
-                    <td>${fData.eps || 'N/A'}</td>
-                    <td>NAVPS</td>
-                    <td>${fData.navps || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td>P/E Ratio</td>
-                    <td>${fData.pe_ratio || 'N/A'}</td>
-                    <td>Total Securities</td>
-                    <td>${(fData.total_securities || 0).toLocaleString()}</td>
-                </tr>
-                <tr>
-                    <td>Listing Year</td>
-                    <td>${data.listing_year || 'N/A'}</td>
-                    <td>Trade Count</td>
-                    <td>${(mData.trade_count || 0).toLocaleString()}</td>
-                </tr>
-            `;
+            // For the Live Demo tab, we'll populate the new audited and interim structures 
+            // from the mock or scraped arrays if they exist, otherwise fallback placeholders.
+            const auditedData = data.financial_performance_audited || (data.instrument && data.instrument.financial_performance_audited);
+            const interimData = data.interim_financial_performance || (data.instrument && data.instrument.interim_financial_performance);
+
+            let audHTML = '';
+            let intHTML = '';
+
+            try {
+                const audArr = typeof auditedData === 'string' ? JSON.parse(auditedData) : (auditedData || [{ year: 'N/A', eps: fData.eps || '-', navps: fData.navps || '-', npat: '-' }]);
+                audArr.forEach(row => {
+                    audHTML += `<tr><td>${row.year || '-'}</td><td>${row.eps || '-'}</td><td>${row.navps || '-'}</td><td>${row.npat || '-'}</td></tr>`;
+                });
+            } catch(e) { audHTML = `<tr><td>N/A</td><td>${fData.eps || '-'}</td><td>${fData.navps || '-'}</td><td>-</td></tr>`; }
+
+            try {
+                const intArr = typeof interimData === 'string' ? JSON.parse(interimData) : (interimData || []);
+                if (intArr.length === 0) intHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No interim data currently scraped</td></tr>';
+                intArr.forEach(row => {
+                    intHTML += `<tr><td>${row.quarter || '-'}</td><td>${row.eps_cont || '-'}</td><td>${row.eps_diluted || '-'}</td><td>${row.navps || '-'}</td></tr>`;
+                });
+            } catch(e) { intHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No interim data currently scraped</td></tr>'; }
+
+            document.getElementById('demoAuditedBody').innerHTML = audHTML;
+            document.getElementById('demoInterimBody').innerHTML = intHTML;
         }
 
         // --- Scraped Data Menu ---
@@ -779,6 +834,30 @@
                         <td>${fData.pe_ratio || 'N/A'}</td>
                     </tr>
                 `;
+
+                // Render Audited Financials
+                let audData = inst.financial_performance_audited;
+                if (typeof audData === 'string') { try { audData = JSON.parse(audData); } catch(e) {} }
+                let audHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No audited data</td></tr>';
+                if (audData && Array.isArray(audData) && audData.length > 0) {
+                    audHTML = '';
+                    audData.forEach(row => {
+                        audHTML += `<tr><td>${row.year || '-'}</td><td>${row.eps || '-'}</td><td>${row.navps || '-'}</td><td>${row.npat || '-'}</td></tr>`;
+                    });
+                }
+                document.getElementById('dbAuditedBody').innerHTML = audHTML;
+
+                // Render Interim Financials
+                let intData = inst.interim_financial_performance;
+                if (typeof intData === 'string') { try { intData = JSON.parse(intData); } catch(e) {} }
+                let intHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No interim data</td></tr>';
+                if (intData && Array.isArray(intData) && intData.length > 0) {
+                    intHTML = '';
+                    intData.forEach(row => {
+                        intHTML += `<tr><td>${row.quarter || '-'}</td><td>${row.eps_cont || '-'}</td><td>${row.eps_diluted || '-'}</td><td>${row.navps || '-'}</td></tr>`;
+                    });
+                }
+                document.getElementById('dbInterimBody').innerHTML = intHTML;
 
                 // Render Corporate Actions (Parse JSON if string)
                 let corpActionsHTML = '<p style="color: var(--text-muted);">No corporate actions recorded in the database yet.</p>';
