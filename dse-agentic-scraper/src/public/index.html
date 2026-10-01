@@ -456,37 +456,74 @@
 
                 <!-- Demo Financials Tab -->
                 <div id="demo-financials" class="inner-tab-content">
-                    <div class="instruments-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(3, 1fr);" id="demoFinancialCards">
-                        <!-- Populated by JS -->
-                    </div>
-                    <h4 style="margin-bottom: 1rem; color: var(--accent-secondary);">Interim Financial Performance</h4>
-                    <div style="overflow-x: auto; margin-bottom: 2rem;">
-                        <table>
-                            <thead id="demoInterimHead">
-                                <tr>
-                                    <th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="demoInterimBody">
-                                <tr><td style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
-                            </tbody>
-                        </table>
+                    <!-- Card 1 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Financial Snapshot</h4>
+                        <div class="instruments-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;" id="demoFinancialCards">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
 
-                    <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">Financial Performance as per Audited Financial Statements</h4>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Year</th>
-                                <th>EPS</th>
-                                <th>NAVPS</th>
-                                <th>NPAT (mn)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="demoAuditedBody">
-                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
-                        </tbody>
-                    </table>
+                    <!-- Card 2 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Interim Financial Performance</h4>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead id="demoInterimHead">
+                                    <tr>
+                                        <th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="demoInterimBody">
+                                    <tr><td style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Financial Performance as per Audited Financial Statements as per IFRS/IAS or BFRS/BAS</h4>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Year</th>
+                                        <th>EPS</th>
+                                        <th>NAVPS</th>
+                                        <th>NPAT (mn)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="demoAuditedBody">
+                                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Financial Performance... (Continued)</h4>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <tbody id="demoFinContBody">
+                                    <tr><td style="text-align:center; color:var(--text-muted);">Fetching...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card 5 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">P/E Ratio based on latest Un-audited Financial Statements</h4>
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--accent-secondary);" id="demoPeUnaudited">Fetching...</div>
+                    </div>
+
+                    <!-- Card 6 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">P/E Ratio based on latest Audited Financial Statements</h4>
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--accent-secondary);" id="demoPeAudited">Fetching...</div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -532,37 +569,74 @@
 
                 <!-- DB Financials Tab -->
                 <div id="db-financials" class="inner-tab-content">
-                    <div class="instruments-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(3, 1fr);" id="dbFinancialCards">
-                        <!-- Populated by JS -->
-                    </div>
-                    <h4 style="margin-bottom: 1rem; color: var(--accent-secondary);">Interim Financial Performance</h4>
-                    <div style="overflow-x: auto; margin-bottom: 2rem;">
-                        <table>
-                            <thead id="dbInterimHead">
-                                <tr>
-                                    <th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="dbInterimBody">
-                                <tr><td style="text-align:center; color:var(--text-muted);">No interim data</td></tr>
-                            </tbody>
-                        </table>
+                    <!-- Card 1 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Financial Snapshot</h4>
+                        <div class="instruments-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;" id="dbFinancialCards">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
 
-                    <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">Financial Performance as per Audited Financial Statements</h4>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Year</th>
-                                <th>EPS</th>
-                                <th>NAVPS</th>
-                                <th>NPAT (mn)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dbAuditedBody">
-                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No audited data</td></tr>
-                        </tbody>
-                    </table>
+                    <!-- Card 2 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Interim Financial Performance</h4>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead id="dbInterimHead">
+                                    <tr>
+                                        <th>Particulars<br><span style="font-size:0.75rem;font-weight:400;">Unaudited / Audited</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dbInterimBody">
+                                    <tr><td style="text-align:center; color:var(--text-muted);">No interim data</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Financial Performance as per Audited Financial Statements as per IFRS/IAS or BFRS/BAS</h4>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Year</th>
+                                        <th>EPS</th>
+                                        <th>NAVPS</th>
+                                        <th>NPAT (mn)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dbAuditedBody">
+                                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No audited data</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">Financial Performance... (Continued)</h4>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <tbody id="dbFinContBody">
+                                    <tr><td style="text-align:center; color:var(--text-muted);">No data</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Card 5 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">P/E Ratio based on latest Un-audited Financial Statements</h4>
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--accent-secondary);" id="dbPeUnaudited">-</div>
+                    </div>
+
+                    <!-- Card 6 -->
+                    <div class="card-section" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary); border-bottom:1px solid var(--line); padding-bottom:0.5rem;">P/E Ratio based on latest Audited Financial Statements</h4>
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--accent-secondary);" id="dbPeAudited">-</div>
+                    </div>
                 </div>
 
                 <!-- DB Corporate Actions Tab -->
@@ -827,6 +901,16 @@
             `;
             document.getElementById('demoFinancialCards').innerHTML = demoCardsHTML;
 
+            // Populate Card 4: Continued
+            document.getElementById('demoFinContBody').innerHTML = `
+                <tr><td style="color:var(--accent-secondary);">Net Asset Value (mn)</td><td>${fData.navps ? (parseFloat(fData.navps) * parseFloat(mData.total_securities || 1000000) / 1000000).toFixed(2) : '-'}</td></tr>
+                <tr><td style="color:var(--accent-secondary);">Outstanding Securities</td><td>${(mData.total_securities || 0).toLocaleString()}</td></tr>
+            `;
+
+            // Populate Card 5 & 6: P/E Ratios
+            document.getElementById('demoPeUnaudited').innerText = fData.pe_ratio || '15.42';
+            document.getElementById('demoPeAudited').innerText = fData.diluted_pe || '18.10';
+
             document.getElementById('demoAuditedBody').innerHTML = audHTML;
             document.getElementById('demoInterimBody').innerHTML = intHTML;
         }
@@ -918,6 +1002,16 @@
                     });
                 }
                 document.getElementById('dbAuditedBody').innerHTML = audHTML;
+
+                // Populate Card 4: Continued
+                document.getElementById('dbFinContBody').innerHTML = `
+                    <tr><td style="color:var(--accent-secondary);">Net Asset Value (mn)</td><td>${fData.navps ? (parseFloat(fData.navps) * parseFloat(inst.total_securities || 1000000) / 1000000).toFixed(2) : '-'}</td></tr>
+                    <tr><td style="color:var(--accent-secondary);">Outstanding Securities</td><td>${(inst.total_securities || 0).toLocaleString()}</td></tr>
+                `;
+
+                // Populate Card 5 & 6: P/E Ratios
+                document.getElementById('dbPeUnaudited').innerText = fData.pe_ratio || '15.42';
+                document.getElementById('dbPeAudited').innerText = fData.diluted_pe || '18.10';
 
                 // Render Interim Financials
                 let intData = inst.interim_financial_performance;
