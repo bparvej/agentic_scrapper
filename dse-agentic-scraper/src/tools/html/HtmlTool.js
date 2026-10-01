@@ -159,6 +159,32 @@ function extractKeyValuePairs(html) {
     }
   });
 
+  // Pattern 4: Next.js flex/grid blocks where a parent has two divs, one being the label and the second the value
+  $('div[class*="rounded-xl"], div[class*="p-3"]').each((_, el) => {
+    const children = $(el).children('div');
+    if (children.length >= 2) {
+      const key = $(children[0]).text().trim().replace(/:$/, '');
+      const value = $(children[1]).text().trim();
+      if (key && value && key.length < 100) {
+        pairs[key] = value;
+      }
+    }
+  });
+
+  // Pattern 5: New Next.js price headers and general key-value grid lists
+  $('div.grid').each((_, el) => {
+    $(el).children('div').each((__, child) => {
+      const spans = $(child).find('span, div');
+      if (spans.length >= 2) {
+         const keyText = $(child).children().first().text().trim().replace(/:$/, '');
+         const valueText = $(child).children().last().text().trim();
+         if (keyText && valueText && keyText !== valueText && keyText.length < 100) {
+            pairs[keyText] = valueText;
+         }
+      }
+    });
+  });
+
   return pairs;
 }
 

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Workflow POC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --bg-card: rgba(20, 20, 20, 0.6);
+            --primary: #4ade80;
+            --secondary: #60a5fa;
+            --accent: #c084fc;
+            --text-main: #ffffff;
+            --text-muted: #a3a3a3;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 15% 50%, rgba(96, 165, 250, 0.15), transparent 25%),
+                              radial-gradient(circle at 85% 30%, rgba(192, 132, 252, 0.15), transparent 25%);
+        }
+
+        nav {
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 2rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 5rem;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 0.5rem 1.25rem;
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--primary);
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -1.5px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+
+        .workflow-diagram {
+            margin-top: 6rem;
+            background: linear-gradient(180deg, rgba(20,20,20,0.8) 0%, rgba(10,10,10,0.8) 100%);
+            border: 1px solid var(--border);
+            border-radius: 2rem;
+            padding: 4rem;
+            text-align: center;
+        }
+
+        .workflow-diagram h2 {
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, var(--text-main), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .steps-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            width: 200px;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .step:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .step-num {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-dark);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .arrow {
+            color: var(--border);
+            font-size: 2rem;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000;
+            background: #fff;
+            border-radius: 3rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 2rem;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.15);
+        }
+
+        .glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--primary);
+            filter: blur(150px);
+            opacity: 0.1;
+            border-radius: 50%;
+            top: -100px;
+            left: -100px;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Agentic Scraper POC</div>
+        <div class="nav-links">
+            <a href="/index.html">← Back to App</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="glow"></div>
+        <div class="hero">
+            <div class="pill">Proof of Concept</div>
+            <h1>The Future of Automated Data Ingestion</h1>
+            <p>Traditional scrapers break when UI changes. Our Agentic Workflow intelligently discovers, extracts, validates, and heals itself using AI reasoning combined with deterministic execution.</p>
+            <a href="/index.html" class="btn">View Live Demo <span>→</span></a>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-icon">🧠</div>
+                <h3>LLM Reasoning</h3>
+                <p>We use LLMs strictly for decision making, anomaly classification, and recovery planning—never for raw data manipulation, ensuring 100% deterministic accuracy.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">⚙️</div>
+                <h3>Multi-Strategy Extraction</h3>
+                <p>The Extraction Agent cascades through methods: intercepting Next.js data props, falling back to DOM parsing, and escalating to headless browser rendering.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🛡️</div>
+                <h3>Self-Healing Pipelines</h3>
+                <p>When extraction fails or anomalies are detected, the Recovery Agent formulates a new approach dynamically, preventing silent failures and alerting human operators.</p>
+            </div>
+        </div>
+
+        <div class="workflow-diagram">
+            <h2>The Agentic State Machine</h2>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Discovery</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Identify page type & load strategy</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Extraction</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Parse DOM/JSON deterministically</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step" style="border-color: var(--accent);">
+                    <div class="step-num" style="background: var(--accent); color: #000;">3</div>
+                    <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Validation</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Zod schemas & anomaly detection</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Persistence</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Transactional DB commit</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -174,18 +174,18 @@ function _mapKvToSchema(kv, symbol, tables) {
     changePercent: lookup(['% change', 'change%', 'change (%)', 'percent change'], 'percentage', 'changePercent'),
 
     // Trading
-    volume: lookup(['volume', 'total volume', 'trade volume'], 'integer', 'volume'),
-    tradeCount: lookup(['trade', 'no. of trades', 'number of trades', 'no of trades', 'trades'], 'integer', 'tradeCount'),
-    turnover: lookup(['value', 'turnover', 'total value', 'total turnover'], 'number', 'turnover'),
+    volume: lookup(['volume', 'total volume', 'trade volume', 'day\'s volume'], 'integer', 'volume'),
+    tradeCount: lookup(['trade', 'no. of trades', 'number of trades', 'no of trades', 'trades', 'day\'s trades'], 'integer', 'tradeCount'),
+    turnover: lookup(['value', 'turnover', 'total value', 'total turnover', 'day\'s value'], 'number', 'turnover'),
     turnoverMn: lookup(['value (mn)', 'turnover (mn)', 'value mn'], 'number', 'turnoverMn'),
 
     // Capital structure
     marketCap: lookup(['market cap', 'market capitalization', 'market capitalisation'], 'number', 'marketCap'),
-    freeFloatCap: lookup(['free float cap', 'free float', 'free-float cap'], 'number', 'freeFloatCap'),
-    authorizedCapital: lookup(['authorised capital', 'authorized capital', 'auth. capital'], 'number', 'authorizedCapital'),
+    freeFloatCap: lookup(['free float cap', 'free float', 'free-float cap', 'free float market cap'], 'number', 'freeFloatCap'),
+    authorizedCapital: lookup(['authorised capital', 'authorized capital', 'auth. capital', 'authorized capital (mn)'], 'number', 'authorizedCapital'),
     paidUpCapital: lookup(['paid-up capital', 'paid up capital', 'paid-up cap', 'paid up cap'], 'number', 'paidUpCapital'),
     faceValue: lookup(['face value', 'nominal value', 'par value', 'fv'], 'number', 'faceValue'),
-    totalSecurities: lookup(['total securities', 'total shares', 'no. of securities', 'no of securities', 'outstanding shares'], 'integer', 'totalSecurities'),
+    totalSecurities: lookup(['total securities', 'total shares', 'no. of securities', 'no of securities', 'outstanding shares', 'total outstanding securities'], 'integer', 'totalSecurities'),
 
     // Financial
     eps: lookup(['eps', 'earnings per share', 'annual eps', 'basic eps'], 'number', 'eps'),
@@ -196,7 +196,7 @@ function _mapKvToSchema(kv, symbol, tables) {
     navps: lookup(['navps', 'nav per share', 'net asset value per share', 'nav'], 'number', 'navps'),
     operatingCashFlow: lookup(['operating cash flow', 'cash from operations', 'ocf'], 'number', 'operatingCashFlow'),
     profit: lookup(['net profit', 'profit after tax', 'total profit'], 'number', 'profit'),
-    peRatio: lookup(['p/e ratio', 'pe ratio', 'price/earnings', 'p/e', 'pe (basic)'], 'number', 'peRatio'),
+    peRatio: lookup(['p/e ratio', 'pe ratio', 'price/earnings', 'p/e', 'pe (basic)', 'p/e (audited)'], 'number', 'peRatio'),
     dilutedPeRatio: lookup(['diluted p/e', 'diluted pe', 'p/e (diluted)'], 'number', 'dilutedPeRatio'),
 
     // Corporate actions
