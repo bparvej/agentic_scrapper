@@ -49,13 +49,18 @@ async function run(state) {
   }
 
   // --- Strategy 2: HTML ---
-  if (!result && (extractionStrategy === 'html' || extractionStrategy === 'nextjs_data')) {
+  if (!result && (extractionStrategy === 'html' || extractionStrategy === 'nextjs_data' || extractionStrategy === 'browser' || extractionStrategy === 'playwright')) {
     log.debug('Trying html strategy', { symbol });
     try {
       result = htmlStrategy.extract(html, symbol);
-      if (result) log.info('html strategy succeeded', { symbol });
+      if (result && result.success) {
+         log.info('html strategy succeeded', { symbol });
+      } else {
+         result = null; // force fallthrough to playwright if html yielded no data
+      }
     } catch (err) {
       log.warn('html strategy threw', { symbol, error: err.message });
+      result = null;
     }
   }
 

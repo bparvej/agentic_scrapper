@@ -135,12 +135,12 @@ function _deterministicFallback(evidence, nextData) {
     };
   }
 
-  if (evidence.isRendered && evidence.tableCount > 0) {
+  if (evidence.isRendered) {
     return {
       sourceType: 'html',
       source: evidence.url,
       confidence: 0.80,
-      reason: 'Page is rendered with tables',
+      reason: 'Page is rendered (using new Next.js divs or tables)',
       requiresBrowser: false,
       alternativeSources: [],
     };
