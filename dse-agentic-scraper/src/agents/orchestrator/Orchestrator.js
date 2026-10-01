@@ -195,6 +195,7 @@ function _buildResult(state) {
     recoveryAttempts: state.recoveryAttempts,
     durationMs: state.durationMs || 0,
     extractionStrategy: state.extractionStrategy,
+    data: state.normalizedData || null,
   };
 }
 

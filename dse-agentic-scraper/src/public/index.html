@@ -515,10 +515,41 @@
             document.getElementById('step5').classList.add('completed');
             document.getElementById('step5').querySelector('.step-icon').innerHTML = '✅';
 
-            // Fetch actual inserted data
-            const dataRes = await fetch(`/api/instruments/${symbol}`);
-            const data = await dataRes.json();
+            // Fetch actual inserted data (fallback to memory if DB is offline)
+            let data = scrapeResult.data || {};
+            try {
+                const dataRes = await fetch(`/api/instruments/${symbol}`);
+                const dbData = await dataRes.json();
+                if (dbData && dbData.marketData) {
+                    data = dbData;
+                }
+            } catch (err) {
+                console.warn('DB fetch failed, using memory data');
+            }
             
+            // Re-format memory data to match DB structure if necessary
+            if (data.marketCap !== undefined && !data.marketData) {
+                data = {
+                    marketData: {
+                        last_trade_price: data.lastTradePrice,
+                        volume: data.volume,
+                        high_price: data.highPrice,
+                        low_price: data.lowPrice,
+                        market_cap: data.marketCap,
+                        authorized_capital: data.authorizedCapital,
+                        paid_up_capital: data.paidUpCapital,
+                        trade_count: data.tradeCount
+                    },
+                    financialData: {
+                        eps: data.eps,
+                        navps: data.navps,
+                        pe_ratio: data.peRatio,
+                        total_securities: data.totalSecurities
+                    },
+                    listing_year: data.listingYear
+                };
+            }
+
             renderResults(data, scrapeResult.extractionStrategy);
 
             btn.disabled = false;

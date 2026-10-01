@@ -149,74 +149,27 @@
         <div class="nav-links">
             <a href="/index.html">← Back to App</a>
             <a href="/presentation.html">✨ Presentation</a>
-            <a href="/debug.html" class="active">🛠️ System Logs & Path</a>
+            <a href="/architecture.html">🧠 Code Architecture</a>
+            <a href="/logs.html" class="active">📝 System Logs</a>
         </div>
     </nav>
 
     <main>
         <div class="header">
-            <h2>Code Execution Traversing Path</h2>
+            <h2>System Logs Terminal</h2>
             <button onclick="clearLogs()" style="padding: 0.5rem 1rem; background: var(--border); color: white; border: none; border-radius: 4px; cursor: pointer;">Clear Logs</button>
         </div>
 
-        <div class="execution-panel">
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Real-time tracking of agents and files actively processing data.</p>
-            <div class="path-container" id="pathContainer">
-                <div class="node active">src/app.js (Listening)</div>
-            </div>
-        </div>
-
-        <h2 style="margin-top: 1rem;">System Logs Terminal</h2>
-        <div class="terminal" id="terminal">
+        <div class="terminal" id="terminal" style="height: 100%;">
             <!-- Logs appear here -->
         </div>
     </main>
 
     <script>
         const terminal = document.getElementById('terminal');
-        const pathContainer = document.getElementById('pathContainer');
-        
-        // Map log modules/agents to their underlying files for the traversing UI
-        const fileMap = {
-            'orchestrator': 'src/agents/orchestrator/Orchestrator.js',
-            'source-discovery': 'src/agents/discovery/SourceDiscoveryAgent.js',
-            'extraction': 'src/agents/extraction/ExtractionAgent.js',
-            'validation': 'src/agents/validation/ValidationAgent.js',
-            'persistence': 'src/agents/persistence/PersistenceAgent.js',
-            'recovery': 'src/agents/recovery/RecoveryAgent.js',
-            'dse': 'src/tools/dse/DseTool.js',
-            'http': 'src/tools/http/HttpTool.js',
-            'database': 'src/database/index.js'
-        };
-
-        const activeNodes = new Set();
-
-        function addPathNode(agentOrModule) {
-            const fileName = fileMap[agentOrModule] || `src/.../${agentOrModule}.js`;
-            if (activeNodes.has(fileName)) return;
-            
-            // Remove active class from old nodes
-            document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
-            
-            const el = document.createElement('div');
-            el.className = 'node active';
-            el.innerText = fileName;
-            pathContainer.appendChild(el);
-            
-            activeNodes.add(fileName);
-            
-            // Keep UI clean, max 8 nodes
-            if (pathContainer.children.length > 8) {
-                const first = pathContainer.children[0];
-                activeNodes.delete(first.innerText);
-                first.remove();
-            }
-        }
 
         function clearLogs() {
             terminal.innerHTML = '';
-            pathContainer.innerHTML = '<div class="node active">src/app.js (Listening)</div>';
-            activeNodes.clear();
         }
 
         // Connect to SSE
@@ -244,11 +197,6 @@
                 
                 terminal.appendChild(entry);
                 terminal.scrollTop = terminal.scrollHeight;
-                
-                // Update Code Traversing Path
-                if (module !== 'system') {
-                    addPathNode(module);
-                }
                 
             } catch (e) {
                 // Not JSON
