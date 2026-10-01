@@ -5,13 +5,36 @@ const InstrumentRepository = require('../../repositories/InstrumentRepository');
 const MarketDataRepository = require('../../repositories/MarketDataRepository');
 const FinancialDataRepository = require('../../repositories/FinancialDataRepository');
 const dseFlightStrategy = require('../../extraction/strategies/dseFlightStrategy');
+const dseListStrategy = require('../../extraction/strategies/dseListStrategy');
 const logger = require('../../logging/logger');
 
 const router = express.Router();
 const log = logger.createChild({ route: 'instruments' });
 
 /**
+ * GET /api/instruments/list
+ * Returns a live list of instruments from DSE homepage
+ */
+router.get('/list', async (req, res) => {
+  try {
+    const listRes = await dseListStrategy.extractList();
+    if (listRes && listRes.success) {
+      return res.json({ instruments: listRes.data, _source: 'live_dse_scrape' });
+    }
+  } catch (err) {
+    log.warn('Live DSE list scrape failed', { error: err.message });
+  }
+
+  // Fallback
+  return res.json({
+    instruments: [{ symbol: 'WALTONHIL' }, { symbol: 'GP' }],
+    _source: 'fallback'
+  });
+});
+
+/**
  * GET /api/instruments/:symbol
+
  *
  * Live-scrape from DSE + DB fallback.
  * Always tries to pull fresh data from DSE's RSC payload first.

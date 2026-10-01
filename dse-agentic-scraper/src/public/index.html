@@ -541,7 +541,9 @@
             <div class="controls-card">
                 <div class="url-box">
                     <div class="url-prefix">DSE Symbol</div>
-                    <input id="dbSymbolInput" type="text" placeholder="e.g. WALTONHIL, GP, BATBC..." value="WALTONHIL" style="background:transparent;border:none;outline:none;color:var(--text-primary);font-size:1rem;width:100%;" />
+                    <select id="dbSymbolInput" style="background:transparent;border:none;outline:none;color:var(--text-primary);font-size:1rem;width:100%;cursor:pointer;">
+                        <option value="WALTONHIL">WALTONHIL (Loading...)</option>
+                    </select>
                 </div>
                 <button class="btn-primary" onclick="loadInstrumentDetails()">Fetch Data</button>
             </div>
@@ -1221,6 +1223,47 @@
                 errorBox.innerHTML = `<strong>Error:</strong> ${err.message}<br><br><span style="font-size: 0.85rem; opacity: 0.8;">Note: If the MySQL database is offline (like on Render free tier), fetching directly from DB will fail.</span>`;
             }
         }
+
+        // --- Fetch Instrument List and Populate Dropdown ---
+        async function loadInstrumentList() {
+            try {
+                const res = await fetch('/api/instruments/list');
+                const data = await res.json();
+                if (data.instruments && data.instruments.length > 0) {
+                    const sorted = data.instruments.sort((a, b) => a.symbol.localeCompare(b.symbol));
+
+                    ['dbSymbolInput', 'symbolSelect'].forEach(id => {
+                        const select = document.getElementById(id);
+                        if (!select || select.tagName !== 'SELECT') return;
+                        
+                        const currentVal = select.value;
+                        select.innerHTML = ''; // clear options
+                        
+                        sorted.forEach(inst => {
+                            const opt = document.createElement('option');
+                            opt.value = inst.symbol;
+                            // Show name if available, else just symbol (we currently only fetch symbol)
+                            opt.text = inst.name ? `${inst.symbol} (${inst.name})` : inst.symbol;
+                            select.appendChild(opt);
+                        });
+                        
+                        if (sorted.some(i => i.symbol === currentVal)) {
+                            select.value = currentVal;
+                        } else if (sorted.some(i => i.symbol === 'WALTONHIL')) {
+                            select.value = 'WALTONHIL';
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load instrument list:", err);
+            }
+        }
+
+        // Run when page loads
+        window.addEventListener('load', () => {
+            loadInstrumentList();
+        });
+
     </script>
 </body>
 </html>
