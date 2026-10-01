@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSE Agentic Scraper - Live Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.8);
+            border-right: 1px solid var(--card-border);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 3rem;
+        }
+
+        .nav-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.3s;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            color: var(--text-main);
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 3rem 4rem;
+            overflow-y: auto;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        h2 { font-size: 2.5rem; margin-bottom: 1.5rem; font-weight: 700; }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 3rem; max-width: 800px; }
+
+        /* UI Controls */
+        .controls-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .url-box {
+            flex: 1;
+            display: flex;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .url-prefix {
+            padding: 1rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            border-right: 1px solid var(--card-border);
+        }
+
+        select {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--accent-primary);
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+        }
+        
+        select option {
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        button.btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        button.btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        button.btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Workflow Animation Box */
+        .workflow-box {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--accent-secondary);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.1);
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.3;
+            transition: all 0.5s;
+        }
+
+        .workflow-step.active {
+            opacity: 1;
+        }
+
+        .workflow-step.completed {
+            opacity: 0.8;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            border: 2px solid transparent;
+        }
+
+        .workflow-step.active .step-icon {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        .workflow-step.completed .step-icon {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .step-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* Tables */
+        .data-table-container {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        td { font-weight: 500; }
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        .tag {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .instruments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .instrument-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .instrument-card:hover {
+            border-color: var(--accent-primary);
+            background: rgba(30, 41, 59, 0.9);
+        }
+        .instrument-card h3 { color: var(--accent-primary); margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">Agentic Scraper</div>
+        <div class="nav-item active" onclick="switchTab('demo')">⚡ Live Demo</div>
+        <div class="nav-item" onclick="switchTab('data')">📊 Scraped Data</div>
+        <div class="nav-item" onclick="switchTab('architecture')">🧠 Architecture</div>
+    </aside>
+
+    <main class="main-content">
+        <!-- LIVE DEMO SECTION -->
+        <section id="demo" class="view-section active">
+            <h2>Live Agentic Workflow</h2>
+            <p class="subtitle">Select an instrument to trigger the multi-agent AI pipeline. Watch as the orchestrator coordinates discovery, extraction, validation, and persistence.</p>
+
+            <div class="controls-card">
+                <div class="url-box">
+                    <div class="url-prefix">https://dse.com.bd/company/</div>
+                    <select id="symbolSelect">
+                        <option value="GP">GP (Grameenphone Ltd.)</option>
+                        <option value="BATBC">BATBC (British American Tobacco)</option>
+                        <option value="SQURPHARMA">SQURPHARMA (Square Pharma)</option>
+                        <option value="BEXIMCO">BEXIMCO</option>
+                        <option value="RENATA">RENATA</option>
+                        <option value="WALTONHIL">WALTONHIL</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="scrapeBtn" onclick="startScrape()">Initiate Agents</button>
+            </div>
+
+            <!-- Agentic Workflow Animation -->
+            <div class="workflow-box" id="workflowBox">
+                <h3 style="margin-bottom: 1.5rem; color: #cbd5e1;">Agent Execution Pipeline</h3>
+                
+                <div class="workflow-step" id="step1">
+                    <div class="step-icon">🧠</div>
+                    <div class="step-text">Orchestrator Agent is planning the task...</div>
+                </div>
+                <div class="workflow-step" id="step2">
+                    <div class="step-icon">🔍</div>
+                    <div class="step-text">Source Discovery Agent is fetching the page and analyzing DOM metadata...</div>
+                </div>
+                <div class="workflow-step" id="step3">
+                    <div class="step-icon">⚙️</div>
+                    <div class="step-text">Extraction Agent is running Next.js / Playwright strategy...</div>
+                </div>
+                <div class="workflow-step" id="step4">
+                    <div class="step-icon">🛡️</div>
+                    <div class="step-text">Validation Agent checking Zod schemas and historical anomalies...</div>
+                </div>
+                <div class="workflow-step" id="step5">
+                    <div class="step-icon">💾</div>
+                    <div class="step-text">Persistence Agent securely committing data to MySQL...</div>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="data-table-container" id="resultsTable">
+                <h3 style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    Extracted Market Data
+                    <span class="tag" id="strategyTag">Strategy: Unknown</span>
+                </h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="marketDataBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+                
+                <h3 style="margin-top: 2rem; margin-bottom: 1.5rem;">Financial Data</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="financialDataBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SCRAPED DATA SECTION -->
+        <section id="data" class="view-section">
+            <h2>Scraped Instruments</h2>
+            <p class="subtitle">Human verification portal. View all data committed to the database by the Persistence Agent.</p>
+            <div style="margin-bottom: 2rem;">
+                <button class="btn-primary" onclick="loadInstruments()">Refresh Data</button>
+            </div>
+            
+            <div id="instrumentsLoading" style="display: none; color: var(--text-muted);"><div class="loader"></div> Loading from database...</div>
+            
+            <div class="instruments-grid" id="instrumentsGrid">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- ARCHITECTURE SECTION -->
+        <section id="architecture" class="view-section">
+            <h2>System Architecture</h2>
+            <p class="subtitle">The DSE Agentic Scraper strictly separates reasoning from execution. The LLM is used for high-level decision making, while deterministic Node.js code handles extraction.</p>
+            
+            <div class="controls-card" style="display: block;">
+                <h3 style="margin-bottom: 1rem; color: var(--accent-primary);">1. Layered Extraction Strategies</h3>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">The system tries fastest methods first: JSON `__NEXT_DATA__` → HTML DOM Parsing → Playwright Headless Browser.</p>
+                
+                <h3 style="margin-bottom: 1rem; color: var(--accent-secondary);">2. LLM Capabilities</h3>
+                <ul style="color: var(--text-muted); margin-left: 1.5rem; margin-bottom: 2rem; line-height: 2;">
+                    <li><strong>Anomaly Classification:</strong> Detects if a 200% EPS jump is a warning or critical.</li>
+                    <li><strong>Failure Diagnosis:</strong> Reads DOM snapshots when extraction fails to plan a recovery route.</li>
+                </ul>
+                
+                <h3 style="margin-bottom: 1rem; color: var(--success);">3. Self-Healing</h3>
+                <p style="color: var(--text-muted);">If validation fails, the Recovery Agent pauses the workflow, consults the LLM with the error context, and retries with a new strategy up to 3 times.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- Navigation ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            if (tabId === 'data') loadInstruments();
+        }
+
+        // --- Live Demo Agentic Workflow Simulation ---
+        async function startScrape() {
+            const btn = document.getElementById('scrapeBtn');
+            const symbol = document.getElementById('symbolSelect').value;
+            const workflowBox = document.getElementById('workflowBox');
+            const resultsTable = document.getElementById('resultsTable');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loader"></div> Processing';
+            
+            // Reset UI
+            resultsTable.style.display = 'none';
+            workflowBox.style.display = 'block';
+            for(let i=1; i<=5; i++) {
+                const el = document.getElementById('step'+i);
+                el.className = 'workflow-step';
+                if(i === 1) el.querySelector('.step-icon').innerHTML = '🧠';
+                if(i === 2) el.querySelector('.step-icon').innerHTML = '🔍';
+                if(i === 3) el.querySelector('.step-icon').innerHTML = '⚙️';
+                if(i === 4) el.querySelector('.step-icon').innerHTML = '🛡️';
+                if(i === 5) el.querySelector('.step-icon').innerHTML = '💾';
+            }
+
+            // Start backend request
+            const apiPromise = fetch('/api/scrape/instrument', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symbol, force: true })
+            }).then(res => res.json());
+
+            // Simulate Agent Pipeline UI (Wait times are visual flair while backend works)
+            await animateStep(1, 1000); // Orchestrator
+            await animateStep(2, 1500); // Source Discovery
+            await animateStep(3, 2000); // Extraction
+            
+            // Wait for API to finish before validating & persisting visually
+            let scrapeResult;
+            try {
+                scrapeResult = await apiPromise;
+            } catch (err) {
+                alert('Scraping failed: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Initiate Agents';
+                return;
+            }
+
+            await animateStep(4, 1200); // Validation
+            await animateStep(5, 800);  // Persistence
+
+            // Mark final step done
+            document.getElementById('step5').classList.remove('active');
+            document.getElementById('step5').classList.add('completed');
+            document.getElementById('step5').querySelector('.step-icon').innerHTML = '✅';
+
+            // Fetch actual inserted data
+            const dataRes = await fetch(`/api/instruments/${symbol}`);
+            const data = await dataRes.json();
+            
+            renderResults(data, scrapeResult.extractionStrategy);
+
+            btn.disabled = false;
+            btn.innerHTML = 'Scrape Another';
+        }
+
+        async function animateStep(stepNum, duration) {
+            return new Promise(resolve => {
+                if(stepNum > 1) {
+                    const prev = document.getElementById('step'+(stepNum-1));
+                    prev.classList.remove('active');
+                    prev.classList.add('completed');
+                    prev.querySelector('.step-icon').innerHTML = '✅';
+                }
+                
+                const curr = document.getElementById('step'+stepNum);
+                curr.classList.add('active');
+                
+                setTimeout(resolve, duration);
+            });
+        }
+
+        function renderResults(data, strategy) {
+            document.getElementById('workflowBox').style.display = 'none';
+            const table = document.getElementById('resultsTable');
+            table.style.display = 'block';
+            
+            document.getElementById('strategyTag').innerText = `Strategy: ${strategy || 'nextjs_data'}`;
+            
+            const mData = data.marketData || {};
+            const fData = data.financialData || {};
+            
+            document.getElementById('marketDataBody').innerHTML = `
+                <tr>
+                    <td>Last Trade Price</td>
+                    <td style="color: var(--accent-primary); font-weight: 700;">৳${mData.last_trade_price || 'N/A'}</td>
+                    <td>Volume</td>
+                    <td>${(mData.volume || 0).toLocaleString()}</td>
+                </tr>
+                <tr>
+                    <td>Day High / Low</td>
+                    <td>৳${mData.high_price || '-'} / ৳${mData.low_price || '-'}</td>
+                    <td>Market Cap</td>
+                    <td>৳${(mData.market_cap || 0).toLocaleString()}</td>
+                </tr>
+            `;
+
+            document.getElementById('financialDataBody').innerHTML = `
+                <tr>
+                    <td>EPS</td>
+                    <td>${fData.eps || 'N/A'}</td>
+                    <td>NAVPS</td>
+                    <td>${fData.navps || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td>P/E Ratio</td>
+                    <td>${fData.pe_ratio || 'N/A'}</td>
+                    <td>Total Securities</td>
+                    <td>${(fData.total_securities || 0).toLocaleString()}</td>
+                </tr>
+            `;
+        }
+
+        // --- Scraped Data Menu ---
+        async function loadInstruments() {
+            const grid = document.getElementById('instrumentsGrid');
+            const loader = document.getElementById('instrumentsLoading');
+            
+            grid.innerHTML = '';
+            loader.style.display = 'block';
+            
+            try {
+                const res = await fetch('/api/instruments');
+                const data = await res.json();
+                
+                loader.style.display = 'none';
+                
+                if(!data.instruments || data.instruments.length === 0) {
+                    grid.innerHTML = '<p style="color: var(--warning);">No instruments scraped yet. Go to Live Demo to scrape some!</p>';
+                    return;
+                }
+                
+                data.instruments.forEach(inst => {
+                    grid.innerHTML += `
+                        <div class="instrument-card" onclick="alert('In a full app, this would open details for ${inst.symbol}')">
+                            <h3>${inst.symbol}</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">${inst.company_name || 'N/A'}</p>
+                            <div style="margin-top: 1rem; display: flex; justify-content: space-between; font-size: 0.8rem;">
+                                <span>Sector:</span>
+                                <span style="color: white;">${inst.sector || 'Unknown'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(err) {
+                loader.style.display = 'none';
+                grid.innerHTML = `<p style="color: var(--error);">Failed to load: ${err.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

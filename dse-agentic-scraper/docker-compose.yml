@@ -1,22 +1,3 @@
-version: '3.9'
-
-# ============================================================
-# DSE Agentic Scraper — Docker Compose
-#
-# Services:
-#   db    — MySQL 8.0
-#   app   — Node.js application
-#
-# Usage:
-#   docker compose up          # start all services
-#   docker compose up -d       # start in background
-#   docker compose down        # stop all services
-#   docker compose down -v     # stop and remove volumes (resets DB)
-#
-# After first start, run migrations:
-#   docker compose exec app npm run db:migrate
-# ============================================================
-
 services:
   # --------------------------------------------------------
   # MySQL database
@@ -31,14 +12,15 @@ services:
       MYSQL_USER: dse_user
       MYSQL_PASSWORD: dse_password
     ports:
-      - "3306:3306"
+      - "3307:3306"   # 3307 on host → 3306 in container (avoids conflict with local MySQL)
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "dse_user", "-pdse_password"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s   # give MySQL plenty of time to initialise on first boot
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
   # --------------------------------------------------------
@@ -59,8 +41,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_CLIENT: mysql2
-      DATABASE_HOST: db
-      DATABASE_PORT: 3306
+      DATABASE_HOST: db          # internal Docker network — uses container name
+      DATABASE_PORT: 3306        # internal port (not the remapped host port)
       DATABASE_NAME: dse_agentic
       DATABASE_USER: dse_user
       DATABASE_PASSWORD: dse_password
@@ -77,7 +59,6 @@ services:
       DISABLE_PLAYWRIGHT: ${DISABLE_PLAYWRIGHT:-false}
       PLAYWRIGHT_HEADLESS: "true"
     volumes:
-      # Mount .env if present (overrides environment above for local dev)
       - ./.env:/app/.env:ro
     command: >
       sh -c "npm run db:migrate && node src/app.js"

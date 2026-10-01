@@ -40,8 +40,20 @@ class BrowserTool {
     const { chromium } = require('playwright');
     const headless = opts.headless ?? config.playwright.headless;
 
+    // Extra stability flags for running Chromium in a restrictive Docker environment
+    const args = [
+      '--no-sandbox', 
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-crash-reporter',
+      '--disable-software-rasterizer'
+    ];
+
+    const launchOptions = { headless, args };
+
     log.info('Launching browser', { headless });
-    this._browser = await chromium.launch({ headless });
+    this._browser = await chromium.launch(launchOptions);
   }
 
   /**

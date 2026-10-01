@@ -76,7 +76,7 @@ async function logErrors(runId, errors) {
       agent: err.agent,
       message: err.message,
       stack: err.stack || null,
-      occurred_at: err.timestamp || new Date(),
+      occurred_at: err.timestamp ? new Date(err.timestamp) : new Date(),
     });
   }
 }

@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const path = require('path');
 const config = require('./config');
 const logger = require('./logging/logger');
 const errorHandler = require('./api/middleware/errorHandler');
@@ -28,6 +29,9 @@ function createApp() {
   });
 
   // Routes
+  // Serve static UI
+  app.use(express.static(path.join(__dirname, 'public')));
+
   app.use('/api/scrape', scrapeRoutes);
   app.use('/api/instruments', instrumentRoutes);
   app.use('/api/health', healthRoutes);
