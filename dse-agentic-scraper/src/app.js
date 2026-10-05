@@ -10,6 +10,7 @@ const scrapeRoutes = require('./api/routes/scrape');
 const instrumentRoutes = require('./api/routes/instruments');
 const healthRoutes = require('./api/routes/health');
 const debugRoutes = require('./api/routes/debug');
+const workflowRoutes = require('./api/routes/workflow');
 
 const log = logger.createChild({ module: 'app' });
 
@@ -37,6 +38,7 @@ function createApp() {
   app.use('/api/instruments', instrumentRoutes);
   app.use('/api/health', healthRoutes);
   app.use('/api/debug', debugRoutes);
+  app.use('/api/workflow', workflowRoutes);
 
   // 404
   app.use((req, res) => {

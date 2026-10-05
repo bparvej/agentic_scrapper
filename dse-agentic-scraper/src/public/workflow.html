@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSE Agentic Scraper — Live Workflow</title>
+<meta name="description" content="Real-time agentic workflow visualization for DSE Agentic Scraper.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c14; --bg2: #0d1520; --surface: rgba(15,24,40,0.85);
+  --surface2: rgba(20,32,52,0.7); --border: rgba(99,168,255,0.12);
+  --border2: rgba(255,255,255,0.06); --blue: #3b82f6;
+  --blue-glow: rgba(59,130,246,0.4); --purple: #8b5cf6;
+  --cyan: #06b6d4; --green: #10b981; --green-glow: rgba(16,185,129,0.4);
+  --yellow: #f59e0b; --red: #ef4444; --red-glow: rgba(239,68,68,0.4);
+  --text: #e2e8f0; --text2: #94a3b8; --text3: #475569;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  min-height: 100vh; overflow-x: hidden;
+  background-image: radial-gradient(ellipse at 10% 0%, rgba(59,130,246,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 90% 100%, rgba(139,92,246,0.08) 0%, transparent 60%);
+}
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 250px; flex-shrink: 0; background: rgba(8,12,20,0.95);
+  border-right: 1px solid var(--border); padding: 1.5rem 1rem;
+  display: flex; flex-direction: column; backdrop-filter: blur(12px);
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.logo { font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, #60a5fa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.25rem; }
+.logo-sub { font-size: 0.65rem; color: var(--text3); margin-bottom: 1.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.nav-link {
+  display: flex; align-items: center; gap: 0.65rem; padding: 0.65rem 0.875rem;
+  border-radius: 0.5rem; color: var(--text2); text-decoration: none;
+  font-size: 0.85rem; font-weight: 500; transition: all 0.2s; margin-bottom: 0.2rem;
+  border: 1px solid transparent;
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-link.active { color: var(--text); background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.25); }
+.nav-section { font-size: 0.62rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 0.875rem; margin-top: 0.75rem; }
+.legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.main { flex: 1; padding: 2rem 2rem; overflow-y: auto; }
+.page-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.35rem; }
+.page-title span { background: linear-gradient(135deg, #60a5fa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.page-sub { color: var(--text2); font-size: 0.87rem; margin-bottom: 1.5rem; }
+.controls-bar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 0.875rem;
+  padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.875rem;
+  margin-bottom: 1rem; backdrop-filter: blur(10px); flex-wrap: wrap;
+}
+.symbol-group {
+  display: flex; align-items: center; background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; flex: 1; min-width: 180px;
+}
+.symbol-pfx { padding: 0.65rem 0.875rem; font-size: 0.75rem; color: var(--text3); background: rgba(255,255,255,0.03); border-right: 1px solid var(--border2); white-space: nowrap; font-family: var(--mono); }
+.symbol-group select { flex: 1; background: transparent; border: none; color: #60a5fa; padding: 0.65rem 0.875rem; font-family: var(--mono); font-size: 0.95rem; font-weight: 700; outline: none; cursor: pointer; appearance: none; }
+.symbol-group select option { background: var(--bg2); color: var(--text); }
+.btn { padding: 0.65rem 1.25rem; border: none; border-radius: 0.5rem; font-size: 0.83rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
+.btn-live { background: linear-gradient(135deg, var(--blue), var(--purple)); color: white; box-shadow: 0 4px 20px var(--blue-glow); }
+.btn-live:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 25px var(--blue-glow); }
+.btn-demo { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+.btn-demo:hover:not(:disabled) { background: rgba(245,158,11,0.22); }
+.btn-ghost { background: rgba(255,255,255,0.05); color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.09); color: var(--text); }
+.demo-badge { display: none; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 2rem; font-size: 0.72rem; font-weight: 600; color: var(--yellow); }
+.demo-badge.on { display: flex; }
+.demo-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); animation: pblink 1.5s infinite; }
+@keyframes pblink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.status-bar { display: flex; align-items: center; gap: 0.5rem; font-size: 0.76rem; color: var(--text3); margin-bottom: 1.25rem; padding: 0.45rem 0.75rem; background: rgba(0,0,0,0.2); border-radius: 0.35rem; }
+.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.sdot.run { background: var(--blue); animation: pblink 1.5s infinite; }
+.sdot.ok { background: var(--green); }
+.sdot.err { background: var(--red); }
+.wf-grid { display: grid; grid-template-columns: 1fr 360px; gap: 1.25rem; align-items: start; }
+@media(max-width:1080px){ .wf-grid{grid-template-columns:1fr;} }
+.canvas {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 1rem;
+  padding: 1.75rem; backdrop-filter: blur(10px); position: relative; overflow: hidden;
+}
+.canvas::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.04) 0%,transparent 60%); pointer-events:none; }
+.canvas-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.75rem; padding-bottom:0.875rem; border-bottom:1px solid var(--border2); }
+.canvas-ttl { font-size:0.75rem; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.1em; }
+.run-id { font-family:var(--mono); font-size:0.68rem; color:var(--text3); background:rgba(255,255,255,0.04); padding:0.2rem 0.55rem; border-radius:0.25rem; }
+.flow { display:flex; flex-direction:column; align-items:center; gap:0; }
+.layer { display:flex; align-items:flex-start; justify-content:center; gap:1.25rem; width:100%; }
+.wnode { display:flex; flex-direction:column; align-items:center; gap:0.4rem; position:relative; transition:all 0.4s; }
+.nbox {
+  background: var(--surface2); border: 1.5px solid var(--border2); border-radius: 0.75rem;
+  padding: 0.875rem 1.1rem; text-align: center; min-width: 110px; max-width: 140px;
+  cursor: pointer; transition: all 0.4s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden;
+}
+.nbox:hover { border-color: var(--blue); }
+.nicon { font-size: 1.4rem; margin-bottom: 0.2rem; display: block; }
+.nlabel { font-size: 0.72rem; font-weight: 600; color: var(--text2); line-height: 1.3; }
+.nsub { font-size: 0.62rem; color: var(--text3); font-family: var(--mono); margin-top: 0.2rem; }
+.nstatus { position:absolute; top:-5px; right:-5px; width:14px; height:14px; border-radius:50%; background:var(--border2); border:2px solid var(--bg); }
+.wnode.idle .nbox { opacity: 0.32; }
+.wnode.active .nbox { border-color:var(--blue); box-shadow:0 0 0 3px rgba(59,130,246,0.15),0 8px 28px rgba(59,130,246,0.28); opacity:1; background:rgba(59,130,246,0.06); }
+.wnode.active .nstatus { background:var(--blue); animation:spulse 1.5s infinite; }
+.wnode.active .nlabel { color:#93c5fd; }
+.wnode.completed .nbox { border-color:var(--green); box-shadow:0 4px 18px rgba(16,185,129,0.14); opacity:1; background:rgba(16,185,129,0.04); }
+.wnode.completed .nstatus { background:var(--green); }
+.wnode.completed .nlabel { color:#6ee7b7; }
+.wnode.failed .nbox { border-color:var(--red); box-shadow:0 4px 18px var(--red-glow); opacity:1; }
+.wnode.failed .nstatus { background:var(--red); }
+.wnode.recovery .nbox { border-color:var(--yellow); box-shadow:0 4px 18px rgba(245,158,11,0.28); opacity:1; animation:rshake 0.6s; }
+.wnode.recovery .nstatus { background:var(--yellow); }
+@keyframes spulse { 0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,0.6);} 50%{box-shadow:0 0 0 5px rgba(59,130,246,0);} }
+@keyframes rshake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+.arrow { display:flex; align-items:center; justify-content:center; height:38px; }
+.aline { stroke:var(--border2); stroke-width:1.5; stroke-dasharray:4 3; transition:stroke 0.5s; }
+.aline.lit { stroke:var(--blue); stroke-dasharray:200; stroke-dashoffset:200; animation:dash 0.8s ease-out forwards; }
+.aline.done { stroke:var(--green); stroke-dasharray:none; }
+@keyframes dash { to{stroke-dashoffset:0;} }
+.branch-h { height:1.5px; background:var(--border2); width:72%; margin:0 auto; transition:background 0.4s; }
+.branch-h.lit { background:linear-gradient(90deg,transparent,var(--blue),transparent); }
+.right-col { display:flex; flex-direction:column; gap:1.1rem; }
+.panel { background:var(--surface); border:1px solid var(--border); border-radius:0.875rem; padding:1.1rem; backdrop-filter:blur(10px); }
+.ptitle { font-size:0.7rem; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.875rem; }
+.si-empty { color:var(--text3); font-size:0.82rem; text-align:center; padding:1.25rem 0; }
+.si-body { display:none; }
+.si-body.on { display:block; }
+.si-comp { display:flex; align-items:center; gap:0.65rem; padding:0.65rem; background:rgba(0,0,0,0.2); border-radius:0.5rem; margin-bottom:0.65rem; }
+.si-icon { font-size:1.35rem; }
+.si-name { font-weight:600; font-size:0.9rem; }
+.si-type { font-size:0.68rem; color:var(--text3); font-family:var(--mono); }
+.si-file { font-family:var(--mono); font-size:0.68rem; color:var(--cyan); background:rgba(6,182,212,0.08); padding:0.35rem 0.55rem; border-radius:0.3rem; margin-bottom:0.45rem; display:flex; align-items:center; gap:0.35rem; cursor:pointer; transition:background 0.2s; word-break:break-all; }
+.si-file:hover { background:rgba(6,182,212,0.14); }
+.si-fn { font-family:var(--mono); font-size:0.68rem; color:var(--purple); padding:0.2rem 0.45rem; background:rgba(139,92,246,0.08); border-radius:0.25rem; display:inline-block; margin-bottom:0.65rem; }
+.si-msg { font-size:0.8rem; color:var(--text2); line-height:1.5; margin-bottom:0.65rem; }
+.si-data { background:rgba(0,0,0,0.35); border:1px solid var(--border2); border-radius:0.5rem; padding:0.65rem; font-family:var(--mono); font-size:0.68rem; color:#a5f3fc; max-height:150px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; line-height:1.6; display:none; }
+.tl-panel { background:var(--surface); border:1px solid var(--border); border-radius:0.875rem; padding:1.1rem; backdrop-filter:blur(10px); max-height:340px; overflow-y:auto; }
+.tl-item { display:flex; align-items:flex-start; gap:0.65rem; padding:0.45rem 0.35rem; border-bottom:1px solid var(--border2); cursor:pointer; transition:background 0.15s; border-radius:0.25rem; }
+.tl-item:last-child { border-bottom:none; }
+.tl-item:hover { background:rgba(255,255,255,0.03); }
+.tl-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:0.32rem; background:var(--text3); }
+.tl-dot.s { background:var(--blue); box-shadow:0 0 5px var(--blue-glow); }
+.tl-dot.c { background:var(--green); }
+.tl-dot.f { background:var(--red); }
+.tl-dot.r { background:var(--yellow); }
+.tl-time { font-family:var(--mono); font-size:0.62rem; color:var(--text3); white-space:nowrap; margin-top:0.12rem; }
+.tl-txt { font-size:0.76rem; color:var(--text2); line-height:1.4; }
+.tl-txt b { color:var(--text); font-weight:500; }
+.tl-empty { color:var(--text3); font-size:0.8rem; text-align:center; padding:1.75rem 0; }
+.result { display:none; background:var(--surface); border:1px solid var(--green); border-radius:0.875rem; padding:1.35rem; backdrop-filter:blur(10px); box-shadow:0 8px 28px rgba(16,185,129,0.1); margin-top:1.25rem; }
+.result.on { display:block; animation:sup 0.4s ease-out; }
+.result.fail { border-color:var(--red); box-shadow:0 8px 28px var(--red-glow); }
+@keyframes sup { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+.res-hdr { display:flex; align-items:center; gap:0.65rem; margin-bottom:1.1rem; }
+.res-icon { font-size:1.6rem; }
+.res-ttl { font-size:1.1rem; font-weight:700; }
+.res-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.65rem; margin-bottom:1.1rem; }
+.res-stat { background:rgba(0,0,0,0.2); border-radius:0.5rem; padding:0.65rem; }
+.res-lbl { font-size:0.67rem; color:var(--text3); margin-bottom:0.2rem; }
+.res-val { font-size:0.95rem; font-weight:700; font-family:var(--mono); }
+.res-val.ok { color:var(--green); }
+.res-val.warn { color:var(--yellow); }
+.res-val.fail { color:var(--red); }
+.res-acts { display:flex; gap:0.65rem; flex-wrap:wrap; }
+.res-data { display:none; background:rgba(0,0,0,0.35); border:1px solid var(--border2); border-radius:0.5rem; padding:0.875rem; font-family:var(--mono); font-size:0.69rem; color:#a5f3fc; max-height:260px; overflow-y:auto; white-space:pre-wrap; line-height:1.6; margin-top:0.875rem; }
+.res-data.on { display:block; animation:sup 0.3s; }
+.spin { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,0.2); border-top-color:white; border-radius:50%; animation:spspin 0.7s linear infinite; vertical-align:middle; }
+@keyframes spspin { to{transform:rotate(360deg);} }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.badge-done { display:none; font-size:0.82rem; font-weight:700; color:var(--green); background:rgba(16,185,129,0.1); border:1px solid var(--green); padding:0.45rem 1.35rem; border-radius:2rem; animation:sup 0.4s; }
+.badge-fail { display:none; font-size:0.82rem; font-weight:700; color:var(--red); background:rgba(239,68,68,0.1); border:1px solid var(--red); padding:0.45rem 1.35rem; border-radius:2rem; animation:sup 0.4s; }
+.toast { position:fixed; bottom:1.25rem; right:1.25rem; background:var(--surface); border:1px solid var(--border); border-radius:0.65rem; padding:0.75rem 1.1rem; font-size:0.82rem; color:var(--text); box-shadow:0 8px 28px rgba(0,0,0,0.4); z-index:1000; display:none; animation:sup 0.3s; }
+.toast.on { display:block; }
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="logo">DSE Agentic Scraper</div>
+  <div class="logo-sub">Workflow Visualizer</div>
+  <div class="nav-section">Navigation</div>
+  <a href="/" class="nav-link">⚡ Live Demo</a>
+  <a href="/workflow.html" class="nav-link active">🔄 Workflow Visualizer</a>
+  <a href="/architecture.html" class="nav-link">🧠 Architecture Explorer</a>
+  <a href="/logs.html" class="nav-link">🗂️ Execution Logs</a>
+  <div class="nav-section" style="margin-top:auto;">Legend</div>
+  <div style="padding:0.4rem 0.875rem;display:flex;flex-direction:column;gap:0.35rem;">
+    <div style="display:flex;align-items:center;gap:0.55rem;font-size:0.7rem;color:var(--text2);"><span class="legend-dot" style="background:var(--blue);box-shadow:0 0 5px var(--blue-glow);"></span>Active</div>
+    <div style="display:flex;align-items:center;gap:0.55rem;font-size:0.7rem;color:var(--text2);"><span class="legend-dot" style="background:var(--green);"></span>Completed</div>
+    <div style="display:flex;align-items:center;gap:0.55rem;font-size:0.7rem;color:var(--text2);"><span class="legend-dot" style="background:var(--yellow);"></span>Recovery</div>
+    <div style="display:flex;align-items:center;gap:0.55rem;font-size:0.7rem;color:var(--text2);"><span class="legend-dot" style="background:var(--red);"></span>Failed</div>
+    <div style="display:flex;align-items:center;gap:0.55rem;font-size:0.7rem;color:var(--text2);"><span class="legend-dot" style="background:var(--text3);opacity:0.4;"></span>Idle</div>
+  </div>
+</aside>
+
+<main class="main">
+  <h1 class="page-title"><span>Live Agentic Workflow</span></h1>
+  <p class="page-sub">Real-time orchestration — watch each agent activate as data flows through the system</p>
+
+  <div class="controls-bar">
+    <div class="symbol-group">
+      <div class="symbol-pfx">dse.com.bd/company/</div>
+      <select id="sym">
+        <option>BATBC</option><option>GP</option><option>SQURPHARMA</option>
+        <option>BEXIMCO</option><option>WALTONHIL</option><option>RENATA</option>
+        <option>BXPHARMA</option><option>LHBL</option>
+      </select>
+    </div>
+    <button class="btn btn-live" id="bLive" onclick="goLive()">⚡ Fetch Live DSE Data</button>
+    <button class="btn btn-demo" id="bDemo" onclick="goDemo()">🎬 Demo Mode</button>
+    <button class="btn btn-ghost" onclick="resetAll()">↺ Reset</button>
+    <div class="demo-badge" id="demoBadge">DEMO — SIMULATED</div>
+  </div>
+
+  <div class="status-bar">
+    <div class="sdot" id="sdot"></div>
+    <span id="stxt">Ready — select an instrument and press Fetch or Demo</span>
+    <span id="srunid" style="margin-left:auto;font-family:var(--mono);font-size:0.62rem;color:var(--text3);"></span>
+  </div>
+
+  <div class="wf-grid">
+    <!-- Canvas -->
+    <div>
+      <div class="canvas">
+        <div class="canvas-hdr">
+          <span class="canvas-ttl">Workflow Execution</span>
+          <span class="run-id" id="runIdDisp">No run started</span>
+        </div>
+        <div class="flow" id="flow">
+
+          <!-- User -->
+          <div class="layer">
+            <div class="wnode idle" id="n-user" onclick="selNode('user')">
+              <div class="nbox"><span class="nicon">👤</span><span class="nlabel">User</span><span class="nsub">API Consumer</span><div class="nstatus"></div></div>
+            </div>
+          </div>
+
+          <div class="arrow"><svg width="2" height="38"><line class="aline" id="a1" x1="1" y1="0" x2="1" y2="34"/><polygon id="ah1" points="1,38 -3,30 5,30" fill="rgba(99,168,255,0.2)"/></svg></div>
+
+          <!-- API -->
+          <div class="layer">
+            <div class="wnode idle" id="n-api" onclick="selNode('api')">
+              <div class="nbox"><span class="nicon">⚙️</span><span class="nlabel">API Endpoint</span><span class="nsub">scrape.js</span><div class="nstatus"></div></div>
+            </div>
+          </div>
+
+          <div class="arrow"><svg width="2" height="38"><line class="aline" id="a2" x1="1" y1="0" x2="1" y2="34"/><polygon id="ah2" points="1,38 -3,30 5,30" fill="rgba(99,168,255,0.2)"/></svg></div>
+
+          <!-- Orchestrator -->
+          <div class="layer">
+            <div class="wnode idle" id="n-orch" onclick="selNode('orch')">
+              <div class="nbox"><span class="nicon">🤖</span><span class="nlabel">Orchestrator Agent</span><span class="nsub">Orchestrator.js</span><div class="nstatus"></div></div>
+            </div>
+          </div>
+
+          <div class="arrow" style="height:26px;"><svg width="2" height="26"><line class="aline" id="a3" x1="1" y1="0" x2="1" y2="22"/></svg></div>
+
+          <!-- Branch 3 agents -->
+          <div style="width:100%;display:flex;flex-direction:column;align-items:center;">
+            <div class="branch-h" id="bht" style="margin-bottom:0;"></div>
+            <div class="layer" style="gap:1rem;">
+              <div class="wnode idle" id="n-src" onclick="selNode('src')">
+                <div class="nbox"><span class="nicon">🔍</span><span class="nlabel">Source Discovery</span><span class="nsub">SourceDiscoveryAgent.js</span><div class="nstatus"></div></div>
+              </div>
+              <div class="wnode idle" id="n-ext" onclick="selNode('ext')">
+                <div class="nbox"><span class="nicon">⚗️</span><span class="nlabel">Extraction Agent</span><span class="nsub">ExtractionAgent.js</span><div class="nstatus"></div></div>
+              </div>
+              <div class="wnode idle" id="n-val" onclick="selNode('val')">
+                <div class="nbox"><span class="nicon">✅</span><span class="nlabel">Validation Agent</span><span class="nsub">ValidationAgent.js</span><div class="nstatus"></div></div>
+              </div>
+            </div>
+            <div class="branch-h" id="bhb" style="margin-top:0;"></div>
+          </div>
+
+          <!-- Recovery (hidden) -->
+          <div id="rec-arrow" style="display:none;" class="arrow" style="height:26px;"><svg width="2" height="26"><line class="aline" id="arec" x1="1" y1="0" x2="1" y2="22"/></svg></div>
+          <div class="layer" id="rec-layer" style="display:none;">
+            <div class="wnode idle" id="n-rec" onclick="selNode('rec')">
+              <div class="nbox" style="border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.05);"><span class="nicon">↻</span><span class="nlabel">Recovery Agent</span><span class="nsub">RecoveryAgent.js</span><div class="nstatus"></div></div>
+            </div>
+          </div>
+
+          <div class="arrow" style="height:26px;"><svg width="2" height="26"><line class="aline" id="a4" x1="1" y1="0" x2="1" y2="22"/></svg></div>
+
+          <!-- Persistence -->
+          <div class="layer">
+            <div class="wnode idle" id="n-pers" onclick="selNode('pers')">
+              <div class="nbox"><span class="nicon">💾</span><span class="nlabel">Persistence Agent</span><span class="nsub">PersistenceAgent.js</span><div class="nstatus"></div></div>
+            </div>
+          </div>
+
+          <div class="arrow"><svg width="2" height="38"><line class="aline" id="a5" x1="1" y1="0" x2="1" y2="34"/><polygon id="ah5" points="1,38 -3,30 5,30" fill="rgba(16,185,129,0.2)"/></svg></div>
+
+          <!-- MySQL -->
+          <div class="layer">
+            <div class="wnode idle" id="n-db" onclick="selNode('db')">
+              <div class="nbox" style="border-color:rgba(245,158,11,0.25);background:rgba(245,158,11,0.04);"><span class="nicon">🗄️</span><span class="nlabel">MySQL</span><span class="nsub">4 tables UPSERT</span><div class="nstatus"></div></div>
+            </div>
+          </div>
+
+          <div class="arrow" style="height:26px;"><svg width="2" height="26"><line class="aline" id="afin" x1="1" y1="0" x2="1" y2="22"/></svg></div>
+          <div class="badge-done" id="bdone">✓ WORKFLOW COMPLETED</div>
+          <div class="badge-fail" id="bfail">✕ WORKFLOW FAILED</div>
+        </div>
+      </div>
+
+      <!-- Result panel -->
+      <div class="result" id="resPanel">
+        <div class="res-hdr">
+          <span class="res-icon" id="resIcon">✅</span>
+          <div><div class="res-ttl" id="resTtl">SCRAPING COMPLETED</div><div style="font-size:0.75rem;color:var(--text2);margin-top:0.2rem;" id="resSub"></div></div>
+        </div>
+        <div class="res-grid" id="resGrid"></div>
+        <div class="res-acts">
+          <button class="btn btn-live" style="padding:0.55rem 1rem;font-size:0.8rem;" onclick="toggleResData()">📋 View Extracted Data</button>
+          <button class="btn btn-ghost" style="padding:0.55rem 1rem;font-size:0.8rem;" onclick="resetAll()">↺ New Run</button>
+        </div>
+        <div class="res-data" id="resData"></div>
+      </div>
+    </div>
+
+    <!-- Right col -->
+    <div class="right-col">
+      <div class="panel">
+        <div class="ptitle">Active Step</div>
+        <div class="si-empty" id="siEmpty">Click any node or wait for a run</div>
+        <div class="si-body" id="siBody">
+          <div class="si-comp"><span class="si-icon" id="siIco">🤖</span><div><div class="si-name" id="siNm">—</div><div class="si-type" id="siTp">—</div></div></div>
+          <div class="si-file" id="siFile">📄 —</div>
+          <div class="si-fn" id="siFn">fn: —</div>
+          <div class="si-msg" id="siMsg">—</div>
+          <div class="si-data" id="siData"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="reasonP" style="display:none;">
+        <div class="ptitle">Agent Reasoning</div>
+        <div style="font-size:0.8rem;color:var(--text2);line-height:1.55;" id="reasonTxt"></div>
+      </div>
+
+      <div class="tl-panel">
+        <div class="ptitle">Execution Timeline</div>
+        <div id="tlBody"><div class="tl-empty">Events will appear during execution</div></div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const META = {
+  user:{ ico:'👤', nm:'User / API Consumer', tp:'External', file:'src/api/routes/scrape.js', fn:'POST /api/scrape/instrument', desc:'The entry point. A client sends a POST request with a DSE instrument symbol.' },
+  api:{ ico:'⚙️', nm:'API Endpoint', tp:'Application Service', file:'src/api/routes/scrape.js', fn:'router.post("/instrument")', desc:'Express route validates the symbol and delegates to the Orchestrator.' },
+  orch:{ ico:'🤖', nm:'Orchestrator Agent', tp:'Agent', file:'src/agents/orchestrator/Orchestrator.js', fn:'scrape(symbol, opts)', desc:'Master workflow controller. Drives the state machine: pending → fetching → analyzing → extracting → validating → [recovering] → persisting → completed.' },
+  src:{ ico:'🔍', nm:'Source Discovery Agent', tp:'Agent', file:'src/agents/source-discovery/SourceDiscoveryAgent.js', fn:'run(state, llm)', desc:'Fetches the DSE company page via HTTP, detects __NEXT_DATA__, and uses LLM reasoning to select the extraction strategy.' },
+  ext:{ ico:'⚗️', nm:'Extraction Agent', tp:'Agent', file:'src/agents/extraction/ExtractionAgent.js', fn:'run(state)', desc:'Tries strategies in priority order: nextjsDataStrategy → htmlStrategy → playwrightStrategy. Returns normalized data.' },
+  val:{ ico:'✅', nm:'Validation Agent', tp:'Agent', file:'src/agents/validation/ValidationAgent.js', fn:'run(state, llm, previousData)', desc:'3-layer validation: Zod schema → business rules → LLM anomaly detection vs historical data.' },
+  rec:{ ico:'↻', nm:'Recovery Agent', tp:'Agent', file:'src/agents/recovery/RecoveryAgent.js', fn:'run(state, llm)', desc:'LLM diagnoses failure and selects an alternative strategy. Retries and re-validates.' },
+  pers:{ ico:'💾', nm:'Persistence Agent', tp:'Agent', file:'src/agents/persistence/PersistenceAgent.js', fn:'run(state)', desc:'Writes validated data to MySQL in a single atomic transaction: instruments, market_data, financial_data, listing_data.' },
+  db:{ ico:'🗄️', nm:'MySQL', tp:'Database', file:'src/database/knex.js', fn:'transaction(async (trx) => ...)', desc:'4 tables updated in one ACID transaction using knex.js ORM.' },
+};
+const STEP_MAP = {
+  source_discovery:'src', extraction:'ext', validation:'val', persistence:'pers', recovery:'rec', database:'db', init:'orch', complete:'orch', http_fetch:'src', nextjs_parser:'ext',
+};
+
+let running=false, isDemoMode=false, lastData=null, es=null;
+
+function goLive(){const s=document.getElementById('sym').value;isDemoMode=false;document.getElementById('demoBadge').classList.remove('on');kick(s,false);}
+function goDemo(){const s=document.getElementById('sym').value;isDemoMode=true;document.getElementById('demoBadge').classList.add('on');kick(s,true);}
+
+async function kick(sym,demo){
+  if(running)return;
+  resetAll(true);running=true;setUI(true);
+  ns('n-user','active');ns('n-api','active');
+  try{
+    const r=await fetch('/api/workflow/scrape',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol:sym,demo})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||'Request failed');}
+    const{runId}=await r.json();
+    document.getElementById('runIdDisp').textContent=runId;
+    document.getElementById('srunid').textContent=runId;
+    ns('n-user','completed');ns('n-api','completed');
+    animA('a1'); animA('a2');
+    openSSE(runId);
+  }catch(e){toast('❌ '+e.message);setUI(false);running=false;}
+}
+
+function openSSE(rid){
+  if(es){es.close();es=null;}
+  es=new EventSource('/api/workflow/stream/'+rid);
+  es.onmessage=e=>{try{handle(JSON.parse(e.data));}catch(_){}};
+  es.onerror=()=>{es.close();es=null;};
+}
+
+function handle(ev){
+  if(ev.event==='__done__'){setUI(false);running=false;return;}
+  const st=ev.status;
+  const ts=new Date(ev.timestamp).toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  addTL(ev.event,ev.component,ev.message,st,ts,ev);
+  updSt(ev.message,st==='started'?'run':(st==='completed'?'ok':'err'));
+
+  switch(ev.event){
+    case 'workflow.started': ns('n-orch','active');selNode('orch',ev);break;
+    case 'agent.started':
+      if(ev.step==='source_discovery'){ns('n-src','active');animA('a3');selNode('src',ev);}
+      if(ev.step==='extraction'){ns('n-ext','active');selNode('ext',ev);}
+      if(ev.step==='validation'){ns('n-val','active');selNode('val',ev);}
+      if(ev.step==='persistence'){ns('n-pers','active');animA('a4');selNode('pers',ev);}
+      break;
+    case 'tool.started': showSub(ev);break;
+    case 'tool.completed': showSub(ev);break;
+    case 'agent.completed':
+      if(ev.step==='source_discovery'){ns('n-src','completed');litBranch();selNode('src',ev);}
+      if(ev.step==='extraction'){ns('n-ext','completed');selNode('ext',ev);}
+      if(ev.step==='validation'){ns('n-val','completed');selNode('val',ev);}
+      if(ev.step==='persistence'){ns('n-pers','completed');selNode('pers',ev);}
+      if(ev.step==='complete'){ns('n-orch','completed');}
+      break;
+    case 'validation.completed':
+      ns('n-val',st==='completed'?'completed':'failed');selNode('val',ev);break;
+    case 'recovery.started':
+      showRec();ns('n-rec','active');selNode('rec',ev);break;
+    case 'recovery.completed': ns('n-rec','completed');break;
+    case 'database.started': ns('n-db','active');animA('a5','green');selNode('db',ev);break;
+    case 'database.completed': ns('n-db','completed');selNode('db',ev);break;
+    case 'workflow.completed':
+      ns('n-orch','completed');
+      document.getElementById('bdone').style.display='block';
+      lastData=ev.data;showRes(ev.data,true);
+      running=false;if(es){es.close();es=null;}setUI(false);break;
+    case 'workflow.failed':
+      ns('n-orch','failed');
+      document.getElementById('bfail').style.display='block';
+      showRes(ev.data||{},false);
+      running=false;if(es){es.close();es=null;}setUI(false);break;
+  }
+}
+
+function ns(id,state){const el=document.getElementById(id);if(el)el.className='wnode '+state;}
+function litBranch(){document.getElementById('bht').classList.add('lit');document.getElementById('bhb').classList.add('lit');}
+function showRec(){document.getElementById('rec-arrow').style.display='flex';document.getElementById('rec-layer').style.display='flex';}
+function animA(id,color){
+  const l=document.getElementById(id);if(!l)return;
+  l.classList.add('lit');if(color==='green')l.style.stroke='var(--green)';
+  setTimeout(()=>{l.classList.remove('lit');l.classList.add('done');},900);
+}
+function selNode(id,ev){
+  const m=META[id];if(!m)return;
+  document.getElementById('siEmpty').style.display='none';
+  document.getElementById('siBody').classList.add('on');
+  document.getElementById('siIco').textContent=m.ico;
+  document.getElementById('siNm').textContent=ev?.component||m.nm;
+  document.getElementById('siTp').textContent=m.tp;
+  document.getElementById('siFile').innerHTML='📄 '+(ev?.file||m.file);
+  document.getElementById('siFn').textContent='fn: '+(ev?.function||m.fn);
+  document.getElementById('siMsg').textContent=ev?.message||m.desc;
+  const sd=document.getElementById('siData');
+  if(ev?.data&&Object.keys(ev.data).length>0){sd.style.display='block';sd.textContent=JSON.stringify(ev.data,null,2);}
+  else{sd.style.display='none';}
+  const r=getReason(id,ev);
+  if(r){document.getElementById('reasonP').style.display='block';document.getElementById('reasonTxt').textContent=r;}
+}
+function showSub(ev){
+  document.getElementById('siEmpty').style.display='none';
+  document.getElementById('siBody').classList.add('on');
+  document.getElementById('siIco').textContent='🔧';
+  document.getElementById('siNm').textContent=ev.component;
+  document.getElementById('siTp').textContent='Tool';
+  document.getElementById('siFile').innerHTML='📄 '+(ev.file||'—');
+  document.getElementById('siFn').textContent='fn: '+(ev.function||'—');
+  document.getElementById('siMsg').textContent=ev.message||'';
+  const sd=document.getElementById('siData');
+  if(ev?.data&&Object.keys(ev.data).length>0){sd.style.display='block';sd.textContent=JSON.stringify(ev.data,null,2);}
+  else sd.style.display='none';
+}
+function getReason(id,ev){
+  const R={
+    src:ev?.data?.reason||'Analysing DSE page structure to select the most reliable extraction strategy. __NEXT_DATA__ detection is performed deterministically; final strategy is confirmed by LLM reasoning.',
+    ext:`Strategy: ${ev?.data?.strategy||'nextjs_data'}. Tries nextjsDataStrategy → htmlStrategy → playwrightStrategy in order, returning the first successful result.`,
+    val:'Three-layer validation: (1) Zod schema — required fields and types. (2) Business rules — price/volume sanity. (3) LLM anomaly detection — compares against historical DB values.',
+    rec:'LLM diagnoses the failure context, considers previously tried strategies, and selects an alternative. Escalates to Playwright (browser rendering) as final resort.',
+    pers:'Only data that passed all validation layers reaches Persistence. All 4 table writes are wrapped in a single MySQL transaction for atomicity.',
+  };
+  return R[id]||null;
+}
+
+function addTL(event,comp,msg,st,ts,ev){
+  const b=document.getElementById('tlBody');
+  const e=b.querySelector('.tl-empty');if(e)e.remove();
+  const dc=st==='started'?'s':(st==='completed'?'c':(st==='failed'?'f':'r'));
+  const d=document.createElement('div');d.className='tl-item';
+  d.innerHTML=`<div class="tl-dot ${dc}"></div><div class="tl-time">${ts}</div><div class="tl-txt"><b>${comp}</b> — ${msg||event}</div>`;
+  d.onclick=()=>{const step=ev?.step;if(step){const mk=STEP_MAP[step]||null;if(mk)selNode(mk,ev);}};
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+
+function showRes(data,ok){
+  const p=document.getElementById('resPanel');p.classList.add('on');
+  if(!ok)p.classList.add('fail');
+  document.getElementById('resIcon').textContent=ok?'✅':'❌';
+  document.getElementById('resTtl').textContent=ok?'SCRAPING COMPLETED':'SCRAPING FAILED';
+  document.getElementById('resSub').textContent=data?.symbol?'Instrument: '+data.symbol:'';
+  const dur=data?.durationMs?(data.durationMs/1000).toFixed(2)+'s':'—';
+  document.getElementById('resGrid').innerHTML=`
+    <div class="res-stat"><div class="res-lbl">Duration</div><div class="res-val">${dur}</div></div>
+    <div class="res-stat"><div class="res-lbl">Strategy</div><div class="res-val" style="font-size:0.78rem;">${data?.extractionStrategy||'—'}</div></div>
+    <div class="res-stat"><div class="res-lbl">Fields Extracted</div><div class="res-val ${ok?'ok':'fail'}">${data?.fieldCount||'—'}</div></div>
+    <div class="res-stat"><div class="res-lbl">Validation</div><div class="res-val ${ok?'ok':'fail'}">${ok?'PASSED':'FAILED'}</div></div>
+    <div class="res-stat"><div class="res-lbl">Records Created</div><div class="res-val">${data?.recordsCreated??'—'}</div></div>
+    <div class="res-stat"><div class="res-lbl">Records Updated</div><div class="res-val">${data?.recordsUpdated??'—'}</div></div>
+    <div class="res-stat"><div class="res-lbl">Warnings</div><div class="res-val ${(data?.warnings?.length||0)>0?'warn':''}">${data?.warnings?.length||0}</div></div>
+    <div class="res-stat"><div class="res-lbl">DB Status</div><div class="res-val ${ok?'ok':'fail'}">${ok?'UPDATED':'SKIPPED'}</div></div>
+  `;
+  document.getElementById('resData').textContent=JSON.stringify(data?.data||data,null,2);
+}
+function toggleResData(){document.getElementById('resData').classList.toggle('on');}
+
+function setUI(r){
+  document.getElementById('bLive').disabled=r;
+  document.getElementById('bDemo').disabled=r;
+  document.getElementById('bLive').innerHTML=r?'<span class="spin"></span> Running...':'⚡ Fetch Live DSE Data';
+  document.getElementById('bDemo').innerHTML=r?'<span class="spin"></span> Running...':'🎬 Demo Mode';
+}
+function updSt(msg,state){document.getElementById('stxt').textContent=msg||'';document.getElementById('sdot').className='sdot '+(state||'');}
+function resetAll(keepBar){
+  if(es){es.close();es=null;}running=false;
+  ['n-user','n-api','n-orch','n-src','n-ext','n-val','n-rec','n-pers','n-db'].forEach(id=>ns(id,'idle'));
+  ['a1','a2','a3','a4','a5','arec','afin'].forEach(id=>{const el=document.getElementById(id);if(el){el.className='aline';el.style.stroke='';}});
+  document.getElementById('bht').classList.remove('lit');document.getElementById('bhb').classList.remove('lit');
+  document.getElementById('rec-arrow').style.display='none';document.getElementById('rec-layer').style.display='none';
+  document.getElementById('bdone').style.display='none';document.getElementById('bfail').style.display='none';
+  document.getElementById('tlBody').innerHTML='<div class="tl-empty">Events will appear during execution</div>';
+  document.getElementById('siEmpty').style.display='block';document.getElementById('siBody').classList.remove('on');
+  document.getElementById('reasonP').style.display='none';
+  const rp=document.getElementById('resPanel');rp.classList.remove('on','fail');
+  document.getElementById('resData').classList.remove('on');
+  document.getElementById('runIdDisp').textContent='No run started';document.getElementById('srunid').textContent='';
+  document.getElementById('demoBadge').classList.remove('on');
+  if(!keepBar){updSt('Ready — select an instrument and press Fetch or Demo','');setUI(false);}
+  lastData=null;
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
+</script>
+</body>
+</html>

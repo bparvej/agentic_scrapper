@@ -1,355 +1,1276 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Scraper - Code Architecture</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-dark: #0d1117;
-            --panel-bg: #161b22;
-            --border: #30363d;
-            --text-main: #c9d1d9;
-            --text-muted: #8b949e;
-            --accent: #58a6ff;
-            --accent-primary: #3b82f6;
-            --accent-secondary: #8b5cf6;
-            --success: #3fb950;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSE Agentic Scraper — Architecture Explorer</title>
+<meta name="description" content="Interactive architecture diagram for DSE Agentic Scraper showing agents, tools, data flow, and source file relationships.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b12;--bg2:#0d1520;--surface:rgba(13,21,32,0.92);--surface2:rgba(18,28,45,0.75);
+  --border:rgba(99,168,255,0.13);--border2:rgba(255,255,255,0.06);
+  --blue:#3b82f6;--blue-glow:rgba(59,130,246,0.35);--purple:#8b5cf6;--purple-glow:rgba(139,92,246,0.35);
+  --cyan:#06b6d4;--teal:#14b8a6;--green:#10b981;--green-glow:rgba(16,185,129,0.3);
+  --yellow:#f59e0b;--orange:#f97316;--red:#ef4444;
+  --text:#dde4f0;--text2:#8b9ab3;--text3:#3f5070;
+  --mono:'JetBrains Mono',monospace;
+  --agent:#3b82f6;--tool:#8b5cf6;--external:#f59e0b;--db:#10b981;--app:#06b6d4;--user:#ec4899;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;
+  background-image:radial-gradient(ellipse at 15% 5%,rgba(59,130,246,0.06) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 95%,rgba(139,92,246,0.06) 0%,transparent 55%),
+    radial-gradient(ellipse at 50% 50%,rgba(6,182,212,0.03) 0%,transparent 70%);}
+.layout{display:flex;min-height:100vh;}
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+/* Sidebar */
+.sidebar{width:240px;flex-shrink:0;background:rgba(7,11,18,0.97);border-right:1px solid var(--border);padding:1.35rem 0.875rem;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.logo{font-weight:800;font-size:1.05rem;background:linear-gradient(135deg,#60a5fa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.2rem;}
+.logo-sub{font-size:0.6rem;color:var(--text3);margin-bottom:1.5rem;letter-spacing:0.08em;text-transform:uppercase;}
+.nav-link{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.75rem;border-radius:0.45rem;color:var(--text2);text-decoration:none;font-size:0.82rem;font-weight:500;transition:all 0.2s;margin-bottom:0.18rem;border:1px solid transparent;}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.04);}
+.nav-link.active{color:var(--text);background:rgba(139,92,246,0.12);border-color:rgba(139,92,246,0.25);}
+.nav-section{font-size:0.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;padding:0.45rem 0.75rem;margin-top:0.65rem;}
+.type-chip{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.65rem;font-weight:600;padding:0.2rem 0.5rem;border-radius:0.25rem;font-family:var(--mono);}
+.tc-agent{background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);}
+.tc-tool{background:rgba(139,92,246,0.12);color:#a78bfa;border:1px solid rgba(139,92,246,0.25);}
+.tc-ext{background:rgba(245,158,11,0.1);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);}
+.tc-db{background:rgba(16,185,129,0.1);color:#34d399;border:1px solid rgba(16,185,129,0.25);}
+.tc-app{background:rgba(6,182,212,0.1);color:#22d3ee;border:1px solid rgba(6,182,212,0.25);}
+.tc-user{background:rgba(236,72,153,0.1);color:#f472b6;border:1px solid rgba(236,72,153,0.25);}
 
-        nav {
-            width: 250px;
-            background: var(--panel-bg);
-            border-right: 1px solid var(--border);
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-        }
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 
-        .logo { font-weight: 700; color: var(--accent); font-size: 1.2rem; margin-bottom: 2rem; }
-        
-        .nav-links a {
-            display: block;
-            padding: 0.8rem 1rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            transition: all 0.2s;
-        }
+/* Topbar */
+.topbar{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:rgba(7,11,18,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);flex-shrink:0;flex-wrap:wrap;}
+.topbar-title{font-size:1.1rem;font-weight:700;letter-spacing:-0.02em;flex:1;}
+.topbar-title span{background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.view-tabs{display:flex;gap:0.35rem;background:rgba(0,0,0,0.3);border:1px solid var(--border2);padding:0.25rem;border-radius:0.5rem;}
+.vtab{padding:0.4rem 0.875rem;border-radius:0.35rem;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--text2);background:transparent;border:none;}
+.vtab:hover{color:var(--text);}
+.vtab.active{background:rgba(139,92,246,0.2);color:#c4b5fd;border:none;}
+.btn-sm{padding:0.4rem 0.875rem;border:1px solid var(--border2);border-radius:0.4rem;font-size:0.76rem;font-weight:600;cursor:pointer;background:rgba(255,255,255,0.04);color:var(--text2);transition:all 0.2s;}
+.btn-sm:hover{background:rgba(255,255,255,0.08);color:var(--text);}
+.btn-sm.primary{background:linear-gradient(135deg,var(--blue),var(--purple));color:white;border:none;box-shadow:0 3px 14px var(--blue-glow);}
+.btn-sm.primary:hover{transform:translateY(-1px);}
 
-        .nav-links a:hover, .nav-links a.active {
-            background: rgba(88, 166, 255, 0.1);
-            color: var(--accent);
-        }
+/* Content split */
+.content-area{flex:1;display:flex;overflow:hidden;}
+.diagram-area{flex:1;overflow:auto;padding:2rem;position:relative;}
+.detail-panel{width:380px;flex-shrink:0;border-left:1px solid var(--border);background:var(--surface);overflow-y:auto;display:flex;flex-direction:column;}
 
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 2rem;
-            gap: 2rem;
-            overflow-y: auto;
-        }
+/* Architecture view */
+.arch-view{display:block;}
+.arch-view.hidden{display:none;}
 
-        .header { display: flex; justify-content: space-between; align-items: center; }
-        
-        /* UI Controls */
-        .controls-card {
-            background: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
+/* Layer system */
+.arch-layers{display:flex;flex-direction:column;gap:1.25rem;min-width:900px;}
+.layer-group{background:rgba(255,255,255,0.015);border:1px solid var(--border2);border-radius:1rem;padding:1rem 1.25rem;}
+.layer-label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:0.875rem;display:flex;align-items:center;gap:0.4rem;}
+.layer-nodes{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start;}
 
-        .url-box {
-            flex: 1;
-            display: flex;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            overflow: hidden;
-            font-family: monospace;
-            font-size: 1.1rem;
-        }
+/* Architecture nodes */
+.arch-node{
+  background:var(--surface2);border:1.5px solid var(--border2);border-radius:0.75rem;
+  padding:0.875rem 1rem;min-width:140px;max-width:180px;cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;
+  flex-shrink:0;
+}
+.arch-node:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.arch-node.selected{box-shadow:0 0 0 2px rgba(139,92,246,0.6),0 8px 24px rgba(139,92,246,0.2);}
+.arch-node .n-icon{font-size:1.5rem;display:block;margin-bottom:0.35rem;}
+.arch-node .n-name{font-size:0.78rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:0.25rem;}
+.arch-node .n-file{font-size:0.62rem;color:var(--text3);font-family:var(--mono);line-height:1.3;}
+.arch-node .n-badge{position:absolute;top:-8px;left:0.875rem;}
 
-        .url-prefix {
-            padding: 1rem;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.05);
-            border-right: 1px solid var(--border);
-        }
+/* Node type colors */
+.arch-node[data-type=agent]{border-color:rgba(59,130,246,0.25);background:rgba(59,130,246,0.04);}
+.arch-node[data-type=agent]:hover{border-color:rgba(59,130,246,0.6);}
+.arch-node[data-type=agent].selected{box-shadow:0 0 0 2px rgba(59,130,246,0.6),0 8px 24px rgba(59,130,246,0.2);}
+.arch-node[data-type=tool]{border-color:rgba(139,92,246,0.25);background:rgba(139,92,246,0.04);}
+.arch-node[data-type=tool]:hover{border-color:rgba(139,92,246,0.6);}
+.arch-node[data-type=external]{border-color:rgba(245,158,11,0.25);background:rgba(245,158,11,0.04);}
+.arch-node[data-type=external]:hover{border-color:rgba(245,158,11,0.6);}
+.arch-node[data-type=database]{border-color:rgba(16,185,129,0.25);background:rgba(16,185,129,0.04);}
+.arch-node[data-type=database]:hover{border-color:rgba(16,185,129,0.6);}
+.arch-node[data-type=app]{border-color:rgba(6,182,212,0.25);background:rgba(6,182,212,0.04);}
+.arch-node[data-type=app]:hover{border-color:rgba(6,182,212,0.6);}
+.arch-node[data-type=user]{border-color:rgba(236,72,153,0.25);background:rgba(236,72,153,0.04);}
+.arch-node[data-type=user]:hover{border-color:rgba(236,72,153,0.6);}
 
-        select {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--accent);
-            padding: 1rem;
-            font-family: monospace;
-            font-size: 1.1rem;
-            font-weight: 700;
-            outline: none;
-            cursor: pointer;
-            appearance: none;
-        }
-        
-        select option {
-            background: var(--bg-dark);
-            color: var(--text-main);
-        }
+/* Data flow view */
+.dataflow-view{display:none;}
+.dataflow-view.active{display:block;}
+.df-step{display:flex;align-items:center;gap:1.25rem;padding:1rem 1.25rem;background:var(--surface2);border:1px solid var(--border2);border-radius:0.75rem;margin-bottom:1.25rem;cursor:pointer;transition:all 0.2s;}
+.df-step:hover{border-color:var(--border);background:rgba(20,30,50,0.8);}
+.df-step.active-step{border-color:rgba(59,130,246,0.5);background:rgba(59,130,246,0.06);}
+.df-icon{font-size:1.6rem;flex-shrink:0;}
+.df-label{font-weight:700;font-size:0.95rem;margin-bottom:0.2rem;}
+.df-desc{font-size:0.78rem;color:var(--text2);}
+.df-data{font-family:var(--mono);font-size:0.7rem;color:#a5f3fc;background:rgba(0,0,0,0.3);padding:0.5rem 0.75rem;border-radius:0.35rem;margin-top:0.5rem;}
+.df-arrow{display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:1.2rem;margin:0.25rem 0;}
 
-        button.btn-primary {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+/* Execution trace view */
+.trace-view{display:none;}
+.trace-view.active{display:block;}
+.trace-line{display:flex;align-items:flex-start;gap:0.875rem;padding:0.65rem 0.75rem;border-radius:0.45rem;margin-bottom:0.35rem;transition:background 0.15s;cursor:pointer;}
+.trace-line:hover{background:rgba(255,255,255,0.03);}
+.trace-time{font-family:var(--mono);font-size:0.68rem;color:var(--text3);white-space:nowrap;margin-top:0.15rem;min-width:85px;}
+.trace-arrow{color:var(--text3);margin:0.5rem 0 0.5rem 2.5rem;font-size:0.8rem;}
+.trace-file{font-family:var(--mono);font-size:0.72rem;color:var(--cyan);}
+.trace-fn{font-family:var(--mono);font-size:0.72rem;color:var(--purple);margin-left:0.5rem;}
+.trace-desc{font-size:0.76rem;color:var(--text2);margin-top:0.1rem;}
 
-        button.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+/* File dependency view */
+.filedep-view{display:none;}
+.filedep-view.active{display:block;}
+.dep-tree{font-family:var(--mono);font-size:0.78rem;color:var(--text2);line-height:1.9;}
+.dep-file{color:var(--cyan);cursor:pointer;transition:color 0.2s;}
+.dep-file:hover{color:#67e8f9;}
+.dep-connector{color:var(--text3);}
+.dep-root{color:var(--green);font-weight:700;}
 
-        /* Execution Path UI */
-        .execution-panel {
-            background: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 2.5rem;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
+/* Detail panel */
+.dp-header{padding:1.25rem 1.25rem 0.875rem;border-bottom:1px solid var(--border2);flex-shrink:0;}
+.dp-empty{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0.75rem;color:var(--text3);font-size:0.85rem;padding:2rem;}
+.dp-body{padding:1.1rem 1.25rem;flex:1;overflow-y:auto;}
+.dp-section{margin-bottom:1.25rem;}
+.dp-section-title{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:0.65rem;}
+.dp-row{display:flex;gap:0.5rem;align-items:flex-start;margin-bottom:0.45rem;}
+.dp-key{font-size:0.72rem;color:var(--text3);min-width:90px;font-weight:500;margin-top:0.1rem;}
+.dp-val{font-size:0.78rem;color:var(--text2);flex:1;line-height:1.45;}
+.dp-file{font-family:var(--mono);font-size:0.7rem;color:var(--cyan);background:rgba(6,182,212,0.08);padding:0.3rem 0.5rem;border-radius:0.3rem;cursor:pointer;display:flex;align-items:center;gap:0.3rem;margin-bottom:0.35rem;transition:background 0.15s;word-break:break-all;}
+.dp-file:hover{background:rgba(6,182,212,0.14);}
+.dp-fn{font-family:var(--mono);font-size:0.7rem;color:var(--purple);background:rgba(139,92,246,0.08);padding:0.25rem 0.45rem;border-radius:0.25rem;display:inline-block;margin-bottom:0.25rem;}
+.dp-desc{font-size:0.82rem;color:var(--text2);line-height:1.55;margin-bottom:0.75rem;}
+.dp-deps{display:flex;flex-wrap:wrap;gap:0.35rem;}
+.dep-tag{font-size:0.68rem;padding:0.2rem 0.5rem;border-radius:0.25rem;background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid var(--border2);font-family:var(--mono);}
 
-        .path-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-            margin-top: 2rem;
-            align-items: center;
-            justify-content: center;
-        }
+/* Code block */
+.code-block{background:#0a0f1a;border:1px solid var(--border2);border-radius:0.6rem;overflow:hidden;margin-top:0.75rem;}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.875rem;background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border2);}
+.code-file{font-family:var(--mono);font-size:0.65rem;color:var(--cyan);}
+.code-lang{font-size:0.62rem;color:var(--text3);font-family:var(--mono);}
+.code-copy{font-size:0.65rem;color:var(--text3);cursor:pointer;background:rgba(255,255,255,0.05);border:1px solid var(--border2);padding:0.2rem 0.5rem;border-radius:0.25rem;transition:all 0.15s;}
+.code-copy:hover{color:var(--text);background:rgba(255,255,255,0.08);}
+.code-body{padding:0.875rem;font-family:var(--mono);font-size:0.72rem;color:#a5f3fc;line-height:1.7;overflow-x:auto;white-space:pre;max-height:280px;overflow-y:auto;}
+.code-body .kw{color:#c084fc;}
+.code-body .fn{color:#60a5fa;}
+.code-body .str{color:#86efac;}
+.code-body .cm{color:#475569;font-style:italic;}
+.code-body .num{color:#fb923c;}
+.code-body .cls{color:#fde68a;}
 
-        .node {
-            background: var(--bg-dark);
-            border: 2px solid var(--border);
-            padding: 1.2rem 1.8rem;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
-            position: relative;
-            transition: all 0.4s ease;
-            opacity: 0.5;
-            transform: scale(0.95);
-        }
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:0.65rem;align-items:center;margin-bottom:1.5rem;}
+.leg-item{display:flex;align-items:center;gap:0.4rem;font-size:0.7rem;color:var(--text2);}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
 
-        .node.active {
-            border-color: var(--accent);
-            box-shadow: 0 0 25px rgba(88, 166, 255, 0.4);
-            color: #fff;
-            opacity: 1;
-            transform: scale(1.05);
-            animation: pulse 2s infinite;
-        }
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 
-        .node::after {
-            content: '→';
-            position: absolute;
-            right: -1.8rem;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            animation: fadeIn 0.5s ease;
-        }
-        .node:last-child::after { display: none; }
+/* Animations */
+@keyframes sup{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.anim-in{animation:sup 0.3s ease-out;}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+/* Connector lines between layers */
+.layer-connector{display:flex;justify-content:center;align-items:center;height:32px;gap:0;}
+.conn-line{width:1.5px;height:32px;background:linear-gradient(to bottom,var(--border),rgba(99,168,255,0.05));margin:0 auto;}
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(88, 166, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
-        }
-        
-        .loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
+/* Modal / expandable code */
+.code-expand-btn{display:flex;align-items:center;gap:0.35rem;font-size:0.7rem;color:var(--text3);cursor:pointer;padding:0.35rem 0;transition:color 0.15s;}
+.code-expand-btn:hover{color:var(--text2);}
+</style>
 </head>
 <body>
-    <nav>
-        <div class="logo">System Debugger</div>
-        <div class="nav-links">
-            <a href="/index.html">← Back to App</a>
-            <a href="/presentation.html">✨ Presentation</a>
-            <a href="/architecture.html" class="active">🧠 Code Architecture</a>
-            <a href="/logs.html">📝 System Logs</a>
-        </div>
-    </nav>
+<div class="layout">
 
-    <main>
-        <div class="header">
-            <h2>Code Level Architecture / Traversing Path</h2>
-        </div>
-        
-        <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 800px;">
-            Initiate the agents and watch the dynamic code execution flow. This visualizer reads system events to highlight exactly which <code>.js</code> file is currently executing.
-        </p>
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="logo">DSE Agentic Scraper</div>
+  <div class="logo-sub">Architecture Explorer</div>
+  <div class="nav-section">Navigation</div>
+  <a href="/" class="nav-link">⚡ Live Demo</a>
+  <a href="/workflow.html" class="nav-link">🔄 Workflow Visualizer</a>
+  <a href="/architecture.html" class="nav-link active">🧠 Architecture Explorer</a>
+  <a href="/logs.html" class="nav-link">🗂️ Execution Logs</a>
+  <div class="nav-section">Legend</div>
+  <div style="padding:0.35rem 0.75rem;display:flex;flex-direction:column;gap:0.4rem;">
+    <div class="leg-item"><div class="leg-dot" style="background:rgba(59,130,246,0.5);border:1px solid #3b82f6;"></div>🤖 Agent</div>
+    <div class="leg-item"><div class="leg-dot" style="background:rgba(139,92,246,0.5);border:1px solid #8b5cf6;"></div>🔧 Tool</div>
+    <div class="leg-item"><div class="leg-dot" style="background:rgba(6,182,212,0.5);border:1px solid #06b6d4;"></div>⚙ App Service</div>
+    <div class="leg-item"><div class="leg-dot" style="background:rgba(245,158,11,0.5);border:1px solid #f59e0b;"></div>🌐 External</div>
+    <div class="leg-item"><div class="leg-dot" style="background:rgba(16,185,129,0.5);border:1px solid #10b981;"></div>🗄 Database</div>
+    <div class="leg-item"><div class="leg-dot" style="background:rgba(236,72,153,0.5);border:1px solid #ec4899;"></div>👤 User</div>
+  </div>
+  <div class="nav-section" style="margin-top:1rem;">Quick Jump</div>
+  <div style="padding:0 0.5rem;display:flex;flex-direction:column;gap:0.15rem;">
+    <div class="nav-link" style="font-size:0.75rem;cursor:pointer;" onclick="jumpLayer('layer-user')">Layer 1 — User</div>
+    <div class="nav-link" style="font-size:0.75rem;cursor:pointer;" onclick="jumpLayer('layer-app')">Layer 2 — Application</div>
+    <div class="nav-link" style="font-size:0.75rem;cursor:pointer;" onclick="jumpLayer('layer-agents')">Layer 3 — Agents</div>
+    <div class="nav-link" style="font-size:0.75rem;cursor:pointer;" onclick="jumpLayer('layer-tools')">Layer 4 — Tools</div>
+    <div class="nav-link" style="font-size:0.75rem;cursor:pointer;" onclick="jumpLayer('layer-ext')">Layer 5 — External</div>
+    <div class="nav-link" style="font-size:0.75rem;cursor:pointer;" onclick="jumpLayer('layer-storage')">Layer 6 — Storage</div>
+  </div>
+</aside>
 
-        <div class="controls-card">
-            <div class="url-box">
-                <div class="url-prefix">https://dse.com.bd/company/</div>
-                <select id="symbolSelect">
-                    <option value="BATBC">BATBC (British American Tobacco)</option>
-                    <option value="GP">GP (Grameenphone Ltd.)</option>
-                    <option value="SQURPHARMA">SQURPHARMA (Square Pharma)</option>
-                    <option value="BEXIMCO">BEXIMCO</option>
-                </select>
+<!-- Main -->
+<div class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title"><span>Interactive Architecture Explorer</span></div>
+    <div class="view-tabs">
+      <button class="vtab active" onclick="switchView('arch',this)">Architecture</button>
+      <button class="vtab" onclick="switchView('dataflow',this)">Data Flow</button>
+      <button class="vtab" onclick="switchView('trace',this)">Exec Trace</button>
+      <button class="vtab" onclick="switchView('deps',this)">File Deps</button>
+    </div>
+    <button class="btn-sm" onclick="clearSelection()">✕ Deselect</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content-area">
+    <div class="diagram-area">
+
+      <!-- ══ ARCHITECTURE VIEW ══ -->
+      <div id="view-arch" class="arch-view">
+        <div class="legend">
+          <span class="leg-item"><span class="leg-dot" style="background:rgba(59,130,246,0.4);border:1px solid #3b82f6;"></span>Agent</span>
+          <span class="leg-item"><span class="leg-dot" style="background:rgba(139,92,246,0.4);border:1px solid #8b5cf6;"></span>Tool</span>
+          <span class="leg-item"><span class="leg-dot" style="background:rgba(6,182,212,0.4);border:1px solid #06b6d4;"></span>App Service</span>
+          <span class="leg-item"><span class="leg-dot" style="background:rgba(245,158,11,0.4);border:1px solid #f59e0b;"></span>External System</span>
+          <span class="leg-item"><span class="leg-dot" style="background:rgba(16,185,129,0.4);border:1px solid #10b981;"></span>Database</span>
+          <span class="leg-item"><span class="leg-dot" style="background:rgba(236,72,153,0.4);border:1px solid #ec4899;"></span>User</span>
+        </div>
+
+        <div class="arch-layers">
+
+          <!-- Layer 1: User -->
+          <div class="layer-group" id="layer-user">
+            <div class="layer-label">
+              <span style="color:#ec4899;">●</span> Layer 1 — User
             </div>
-            <button class="btn-primary" id="scrapeBtn" onclick="startScrape()">Initiate Agents</button>
-        </div>
-
-        <div class="execution-panel">
-            <h3 style="margin-bottom: 1rem;">Live File Execution Graph</h3>
-            <div class="path-container" id="pathContainer">
-                <div class="node active" id="node-app">src/app.js (Idle)</div>
+            <div class="layer-nodes">
+              <div class="arch-node" data-type="user" data-id="user" onclick="selectNode('user')">
+                <div class="n-badge"><span class="type-chip tc-user">👤 user</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">👤</span>
+                <div class="n-name">API Consumer</div>
+                <div class="n-file">External Client</div>
+              </div>
             </div>
+          </div>
+
+          <div class="layer-connector"><div class="conn-line"></div></div>
+
+          <!-- Layer 2: Application -->
+          <div class="layer-group" id="layer-app">
+            <div class="layer-label">
+              <span style="color:#06b6d4;">●</span> Layer 2 — Application Services
+            </div>
+            <div class="layer-nodes">
+              <div class="arch-node" data-type="app" data-id="app-entry" onclick="selectNode('app-entry')">
+                <div class="n-badge"><span class="type-chip tc-app">⚙ service</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🚀</span>
+                <div class="n-name">App Entry Point</div>
+                <div class="n-file">src/app.js</div>
+              </div>
+              <div class="arch-node" data-type="app" data-id="api-scrape" onclick="selectNode('api-scrape')">
+                <div class="n-badge"><span class="type-chip tc-app">⚙ route</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🔌</span>
+                <div class="n-name">Scrape API Route</div>
+                <div class="n-file">src/api/routes/scrape.js</div>
+              </div>
+              <div class="arch-node" data-type="app" data-id="api-instruments" onclick="selectNode('api-instruments')">
+                <div class="n-badge"><span class="type-chip tc-app">⚙ route</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">📊</span>
+                <div class="n-name">Instruments API</div>
+                <div class="n-file">src/api/routes/instruments.js</div>
+              </div>
+              <div class="arch-node" data-type="app" data-id="scraping-state" onclick="selectNode('scraping-state')">
+                <div class="n-badge"><span class="type-chip tc-app">⚙ state</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🔄</span>
+                <div class="n-name">Scraping State</div>
+                <div class="n-file">src/workflow/state/ScrapingState.js</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="layer-connector"><div class="conn-line"></div></div>
+
+          <!-- Layer 3: Agents -->
+          <div class="layer-group" id="layer-agents">
+            <div class="layer-label">
+              <span style="color:#3b82f6;">●</span> Layer 3 — Agents
+            </div>
+            <div class="layer-nodes">
+              <div class="arch-node" data-type="agent" data-id="orchestrator" onclick="selectNode('orchestrator')">
+                <div class="n-badge"><span class="type-chip tc-agent">🤖 agent</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🤖</span>
+                <div class="n-name">Orchestrator Agent</div>
+                <div class="n-file">orchestrator/Orchestrator.js</div>
+              </div>
+              <div class="arch-node" data-type="agent" data-id="source-discovery" onclick="selectNode('source-discovery')">
+                <div class="n-badge"><span class="type-chip tc-agent">🤖 agent</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🔍</span>
+                <div class="n-name">Source Discovery Agent</div>
+                <div class="n-file">source-discovery/SourceDiscoveryAgent.js</div>
+              </div>
+              <div class="arch-node" data-type="agent" data-id="extraction-agent" onclick="selectNode('extraction-agent')">
+                <div class="n-badge"><span class="type-chip tc-agent">🤖 agent</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">⚗️</span>
+                <div class="n-name">Extraction Agent</div>
+                <div class="n-file">extraction/ExtractionAgent.js</div>
+              </div>
+              <div class="arch-node" data-type="agent" data-id="validation-agent" onclick="selectNode('validation-agent')">
+                <div class="n-badge"><span class="type-chip tc-agent">🤖 agent</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">✅</span>
+                <div class="n-name">Validation Agent</div>
+                <div class="n-file">validation/ValidationAgent.js</div>
+              </div>
+              <div class="arch-node" data-type="agent" data-id="recovery-agent" onclick="selectNode('recovery-agent')">
+                <div class="n-badge"><span class="type-chip tc-agent">🤖 agent</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">↻</span>
+                <div class="n-name">Recovery Agent</div>
+                <div class="n-file">recovery/RecoveryAgent.js</div>
+              </div>
+              <div class="arch-node" data-type="agent" data-id="persistence-agent" onclick="selectNode('persistence-agent')">
+                <div class="n-badge"><span class="type-chip tc-agent">🤖 agent</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">💾</span>
+                <div class="n-name">Persistence Agent</div>
+                <div class="n-file">persistence/PersistenceAgent.js</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="layer-connector"><div class="conn-line"></div></div>
+
+          <!-- Layer 4: Tools -->
+          <div class="layer-group" id="layer-tools">
+            <div class="layer-label">
+              <span style="color:#8b5cf6;">●</span> Layer 4 — Tools &amp; Strategies
+            </div>
+            <div class="layer-nodes">
+              <div class="arch-node" data-type="tool" data-id="http-tool" onclick="selectNode('http-tool')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 tool</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🌐</span>
+                <div class="n-name">HTTP Fetcher</div>
+                <div class="n-file">tools/http/HttpTool.js</div>
+              </div>
+              <div class="arch-node" data-type="tool" data-id="dse-tool" onclick="selectNode('dse-tool')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 tool</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">📡</span>
+                <div class="n-name">DSE Tool</div>
+                <div class="n-file">tools/dse/DseTool.js</div>
+              </div>
+              <div class="arch-node" data-type="tool" data-id="html-tool" onclick="selectNode('html-tool')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 tool</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">📝</span>
+                <div class="n-name">HTML Parser</div>
+                <div class="n-file">tools/html/HtmlTool.js</div>
+              </div>
+              <div class="arch-node" data-type="tool" data-id="browser-tool" onclick="selectNode('browser-tool')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 tool</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🎭</span>
+                <div class="n-name">Browser (Playwright)</div>
+                <div class="n-file">tools/browser/BrowserTool.js</div>
+              </div>
+              <div class="arch-node" data-type="tool" data-id="nextjs-strategy" onclick="selectNode('nextjs-strategy')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 strategy</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">▲</span>
+                <div class="n-name">Next.js Data Strategy</div>
+                <div class="n-file">extraction/strategies/nextjsDataStrategy.js</div>
+              </div>
+              <div class="arch-node" data-type="tool" data-id="html-strategy" onclick="selectNode('html-strategy')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 strategy</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🏷</span>
+                <div class="n-name">HTML Strategy</div>
+                <div class="n-file">extraction/strategies/htmlStrategy.js</div>
+              </div>
+              <div class="arch-node" data-type="tool" data-id="playwright-strategy" onclick="selectNode('playwright-strategy')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 strategy</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🎭</span>
+                <div class="n-name">Playwright Strategy</div>
+                <div class="n-file">extraction/strategies/playwrightStrategy.js</div>
+              </div>
+              <div class="arch-node" data-type="tool" data-id="business-rules" onclick="selectNode('business-rules')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 validator</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">📏</span>
+                <div class="n-name">Business Rules</div>
+                <div class="n-file">validation/businessRules.js</div>
+              </div>
+              <div class="arch-node" data-type="tool" data-id="llm-provider" onclick="selectNode('llm-provider')">
+                <div class="n-badge"><span class="type-chip tc-tool">🔧 llm</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🧠</span>
+                <div class="n-name">LLM Provider</div>
+                <div class="n-file">providers/llm/factory.js</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="layer-connector"><div class="conn-line"></div></div>
+
+          <!-- Layer 5: External -->
+          <div class="layer-group" id="layer-ext">
+            <div class="layer-label">
+              <span style="color:#f59e0b;">●</span> Layer 5 — External Systems
+            </div>
+            <div class="layer-nodes">
+              <div class="arch-node" data-type="external" data-id="dse-website" onclick="selectNode('dse-website')">
+                <div class="n-badge"><span class="type-chip tc-ext">🌐 external</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🌐</span>
+                <div class="n-name">DSE Website</div>
+                <div class="n-file">dse.com.bd (Next.js)</div>
+              </div>
+              <div class="arch-node" data-type="external" data-id="llm-api" onclick="selectNode('llm-api')">
+                <div class="n-badge"><span class="type-chip tc-ext">🌐 external</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🤖</span>
+                <div class="n-name">LLM API</div>
+                <div class="n-file">OpenAI / Anthropic / etc.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="layer-connector"><div class="conn-line"></div></div>
+
+          <!-- Layer 6: Storage -->
+          <div class="layer-group" id="layer-storage">
+            <div class="layer-label">
+              <span style="color:#10b981;">●</span> Layer 6 — Storage
+            </div>
+            <div class="layer-nodes">
+              <div class="arch-node" data-type="database" data-id="mysql" onclick="selectNode('mysql')">
+                <div class="n-badge"><span class="type-chip tc-db">🗄 database</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🗄️</span>
+                <div class="n-name">MySQL</div>
+                <div class="n-file">src/database/knex.js</div>
+              </div>
+              <div class="arch-node" data-type="database" data-id="repo-instrument" onclick="selectNode('repo-instrument')">
+                <div class="n-badge"><span class="type-chip tc-db">🗄 repo</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">📋</span>
+                <div class="n-name">Instrument Repo</div>
+                <div class="n-file">repositories/InstrumentRepository.js</div>
+              </div>
+              <div class="arch-node" data-type="database" data-id="repo-market" onclick="selectNode('repo-market')">
+                <div class="n-badge"><span class="type-chip tc-db">🗄 repo</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">📈</span>
+                <div class="n-name">Market Data Repo</div>
+                <div class="n-file">repositories/MarketDataRepository.js</div>
+              </div>
+              <div class="arch-node" data-type="database" data-id="repo-financial" onclick="selectNode('repo-financial')">
+                <div class="n-badge"><span class="type-chip tc-db">🗄 repo</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">💰</span>
+                <div class="n-name">Financial Data Repo</div>
+                <div class="n-file">repositories/FinancialDataRepository.js</div>
+              </div>
+              <div class="arch-node" data-type="database" data-id="repo-scraping-run" onclick="selectNode('repo-scraping-run')">
+                <div class="n-badge"><span class="type-chip tc-db">🗄 repo</span></div>
+                <span class="n-icon" style="margin-top:0.75rem;">🔖</span>
+                <div class="n-name">Scraping Run Repo</div>
+                <div class="n-file">repositories/ScrapingRunRepository.js</div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /arch-layers -->
+      </div><!-- /view-arch -->
+
+      <!-- ══ DATA FLOW VIEW ══ -->
+      <div id="view-dataflow" class="dataflow-view">
+        <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Data Flow</h2>
+        <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1.5rem;">How data transforms as it moves through the system</p>
+        <div id="dfSteps"></div>
+      </div>
+
+      <!-- ══ EXECUTION TRACE VIEW ══ -->
+      <div id="view-trace" class="trace-view">
+        <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">Code Execution Trace</h2>
+        <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1.5rem;">Typical execution path for a successful BATBC scrape</p>
+        <div id="traceLines"></div>
+      </div>
+
+      <!-- ══ FILE DEPENDENCY VIEW ══ -->
+      <div id="view-deps" class="filedep-view">
+        <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;">File Dependency Graph</h2>
+        <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1.5rem;">How source files import each other</p>
+        <div id="depTree" style="padding:1.5rem;background:rgba(0,0,0,0.3);border:1px solid var(--border2);border-radius:0.75rem;"></div>
+      </div>
+
+    </div><!-- /diagram-area -->
+
+    <!-- ══ DETAIL PANEL ══ -->
+    <div class="detail-panel">
+      <div id="dpEmpty" class="dp-empty">
+        <div style="font-size:2.5rem;">🧩</div>
+        <div>Click any node to inspect</div>
+        <div style="font-size:0.75rem;color:var(--text3);text-align:center;max-width:200px;">Select an architecture component to view its files, functions, dependencies, and code</div>
+      </div>
+      <div id="dpContent" style="display:none;flex:1;overflow-y:auto;display:none;">
+        <div class="dp-header">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">
+            <span style="font-size:1.8rem;" id="dpIcon">🤖</span>
+            <div>
+              <div style="font-weight:700;font-size:1rem;" id="dpName">—</div>
+              <div id="dpTypeBadge"></div>
+            </div>
+          </div>
         </div>
-    </main>
+        <div class="dp-body">
+          <div class="dp-section">
+            <div class="dp-section-title">Description</div>
+            <div class="dp-desc" id="dpDesc">—</div>
+          </div>
+          <div class="dp-section">
+            <div class="dp-section-title">Source Files</div>
+            <div id="dpFiles">—</div>
+          </div>
+          <div class="dp-section">
+            <div class="dp-section-title">Key Functions</div>
+            <div id="dpFunctions">—</div>
+          </div>
+          <div class="dp-section" id="dpDepsSection">
+            <div class="dp-section-title">Dependencies</div>
+            <div class="dp-deps" id="dpDeps">—</div>
+          </div>
+          <div class="dp-section" id="dpOutputSection">
+            <div class="dp-section-title">Output / Returns</div>
+            <div class="dp-desc" id="dpOutput">—</div>
+          </div>
+          <div class="dp-section">
+            <div class="dp-section-title">Code Snippet</div>
+            <div id="dpCode"></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /detail-panel -->
 
-    <script>
-        const pathContainer = document.getElementById('pathContainer');
-        
-        // Map log modules/agents to their underlying files for the traversing UI
-        const fileMap = {
-            'app': 'src/app.js',
-            'orchestrator': 'src/agents/orchestrator/Orchestrator.js',
-            'source-discovery': 'src/agents/discovery/SourceDiscoveryAgent.js',
-            'extraction': 'src/agents/extraction/ExtractionAgent.js',
-            'validation': 'src/agents/validation/ValidationAgent.js',
-            'persistence': 'src/agents/persistence/PersistenceAgent.js',
-            'recovery': 'src/agents/recovery/RecoveryAgent.js',
-            'dse': 'src/tools/dse/DseTool.js',
-            'http': 'src/tools/http/HttpTool.js',
-            'database': 'src/database/index.js'
-        };
+  </div><!-- /content-area -->
+</div><!-- /main -->
+</div><!-- /layout -->
 
-        const activeNodes = new Set();
+<script>
+// ──────────────────────────────────────────────────────────────
+// Architecture node definitions — ALL from real source files
+// ──────────────────────────────────────────────────────────────
+const NODES = {
+  'user': {
+    icon:'👤', name:'API Consumer', type:'User',
+    typeClass:'tc-user',
+    desc:'External client or internal CLI that initiates a scraping run by calling POST /api/scrape/instrument with a DSE symbol.',
+    files:['HTTP Client'],
+    functions:['POST /api/scrape/instrument { symbol, force }'],
+    deps:[],
+    output:'HTTP request to the Scrape API Route',
+    code:null,
+  },
+  'app-entry': {
+    icon:'🚀', name:'App Entry Point', type:'Application Service',
+    typeClass:'tc-app',
+    desc:'Bootstraps Express, registers all routes, configures middleware, and starts the HTTP server. Also validates config and logs startup state.',
+    files:['src/app.js'],
+    functions:['createApp()', 'main()'],
+    deps:['scrape.js','instruments.js','health.js','debug.js','workflow.js','errorHandler.js'],
+    output:'Running Express HTTP server on configured port',
+    code: `<span class="kw">function</span> <span class="fn">createApp</span>() {
+  <span class="kw">const</span> app = express();
+  app.use(express.json());
+  app.use(express.static(path.join(__dirname, <span class="str">'public'</span>)));
 
-        function addPathNode(agentOrModule) {
-            const fileName = fileMap[agentOrModule] || `src/.../${agentOrModule}.js`;
-            
-            // Remove active class from old nodes
-            document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
-            
-            // Check if node already exists in the graph to activate it, otherwise create it
-            let existingNode = Array.from(pathContainer.children).find(el => el.innerText === fileName);
-            
-            if (existingNode) {
-                existingNode.classList.add('active');
-                // Move it to the end
-                pathContainer.appendChild(existingNode);
-            } else {
-                const el = document.createElement('div');
-                el.className = 'node active';
-                el.innerText = fileName;
-                pathContainer.appendChild(el);
-                activeNodes.add(fileName);
-            }
-            
-            // Keep UI clean, max 6 nodes on screen
-            if (pathContainer.children.length > 6) {
-                const first = pathContainer.children[0];
-                activeNodes.delete(first.innerText);
-                first.remove();
-            }
-        }
+  app.use(<span class="str">'/api/scrape'</span>, scrapeRoutes);
+  app.use(<span class="str">'/api/instruments'</span>, instrumentRoutes);
+  app.use(<span class="str">'/api/workflow'</span>, workflowRoutes);
 
-        // Connect to SSE for Live Updates
-        const evtSource = new EventSource("/api/debug/stream");
-        evtSource.onmessage = function(event) {
-            try {
-                const logData = JSON.parse(event.data);
-                const module = logData.agent || logData.tool || logData.module || logData.route || 'system';
-                if (module !== 'system' && module !== 'migrate') {
-                    addPathNode(module);
-                }
-            } catch (e) {
-                // Ignore raw lines
-            }
-        };
+  <span class="kw">return</span> app;
+}`,
+  },
+  'api-scrape': {
+    icon:'🔌', name:'Scrape API Route', type:'Application Service',
+    typeClass:'tc-app',
+    desc:'Express router that handles POST /api/scrape/instrument. Validates the symbol, calls Orchestrator.scrape(), and returns the full result synchronously. Also provides GET /api/scrape/runs/:runId and GET /api/scrape/history/:symbol.',
+    files:['src/api/routes/scrape.js'],
+    functions:['router.post("/instrument")', 'router.get("/runs/:runId")', 'router.get("/history/:symbol")'],
+    deps:['Orchestrator.js','ScrapingRunRepository.js'],
+    output:'{ runId, symbol, status, recordsCreated, recordsUpdated, warnings, errors, data }',
+    code:`<span class="cm">// POST /api/scrape/instrument</span>
+router.post(<span class="str">'/instrument'</span>, <span class="kw">async</span> (req, res) => {
+  <span class="kw">const</span> { symbol, force = <span class="kw">false</span> } = req.body;
+  <span class="kw">const</span> clean = symbol.trim().toUpperCase();
 
-        async function startScrape() {
-            const btn = document.getElementById('scrapeBtn');
-            const symbol = document.getElementById('symbolSelect').value;
-            
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loader"></div> Processing';
-            
-            pathContainer.innerHTML = '';
-            activeNodes.clear();
-            addPathNode('app');
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">Orchestrator.scrape</span>(clean, { force });
+  <span class="kw">const</span> httpStatus = result.status === <span class="str">'completed'</span> ? <span class="num">200</span> : <span class="num">207</span>;
+  <span class="kw">return</span> res.status(httpStatus).json(result);
+});`,
+  },
+  'api-instruments': {
+    icon:'📊', name:'Instruments API Route', type:'Application Service',
+    typeClass:'tc-app',
+    desc:'Provides read-only access to scraped instrument data stored in the database. Returns market data, financial data, listing data, and the full instrument record.',
+    files:['src/api/routes/instruments.js'],
+    functions:['router.get("/:symbol")', 'router.get("/")', 'router.get("/list/symbols")'],
+    deps:['InstrumentRepository.js','MarketDataRepository.js','FinancialDataRepository.js'],
+    output:'{ instrument, marketData, financialData, listingData }',
+    code:null,
+  },
+  'scraping-state': {
+    icon:'🔄', name:'Scraping State Machine', type:'Application Service',
+    typeClass:'tc-app',
+    desc:'Immutable state object passed between all agents. Each agent reads from state and returns a new state — never mutating the original. Contains the full workflow context: source HTML, extracted data, validation results, recovery plans.',
+    files:['src/workflow/state/ScrapingState.js'],
+    functions:['constructor(init)','update(updates)','addError(agent, error)','transition(status)','toJSON()'],
+    deps:['uuid'],
+    output:'ScrapingState instance with all workflow data',
+    code:`<span class="cm">// Status flow:</span>
+<span class="cm">// pending → fetching → analyzing → extracting</span>
+<span class="cm">// → validating → [recovering] → persisting → completed</span>
 
-            try {
-                // Trigger backend request
-                await fetch('/api/scrape/instrument', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ symbol, force: true })
-                }).then(res => res.json());
-                
-                // Add success marker at the end
-                setTimeout(() => {
-                    document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
-                    const el = document.createElement('div');
-                    el.className = 'node active';
-                    el.style.borderColor = 'var(--success)';
-                    el.style.color = 'var(--success)';
-                    el.innerText = '✅ Workflow Completed';
-                    pathContainer.appendChild(el);
-                }, 1000);
+<span class="kw">class</span> <span class="cls">ScrapingState</span> {
+  <span class="fn">update</span>(updates) {
+    <span class="kw">return new</span> <span class="cls">ScrapingState</span>({ ...this, ...updates });
+  }
+  <span class="fn">transition</span>(status) {
+    <span class="kw">return this</span>.<span class="fn">update</span>({ status });
+  }
+}`,
+  },
+  'orchestrator': {
+    icon:'🤖', name:'Orchestrator Agent', type:'Agent',
+    typeClass:'tc-agent',
+    desc:'Master workflow controller. Drives the scraping state machine step by step: fetches → analyzes → extracts → validates → [recovers] → persists. Does not contain business logic — delegates to specialist agents. Persists run state to DB at every step.',
+    files:['src/agents/orchestrator/Orchestrator.js'],
+    functions:['scrape(symbol, opts)', '_updateRun(state)', '_finalise(state)', '_buildResult(state)'],
+    deps:['SourceDiscoveryAgent.js','ExtractionAgent.js','ValidationAgent.js','RecoveryAgent.js','PersistenceAgent.js','ScrapingRunRepository.js','ScrapingState.js'],
+    output:'ScrapingRunResult { runId, symbol, status, recordsCreated, recordsUpdated, warnings, errors, durationMs, data }',
+    code:`<span class="kw">async function</span> <span class="fn">scrape</span>(symbol, opts = {}) {
+  <span class="kw">const</span> llm = <span class="fn">getLLMProvider</span>();
+  <span class="kw">let</span> state = <span class="kw">new</span> <span class="cls">ScrapingState</span>({ symbol });
 
-            } catch (err) {
-                alert('Scraping failed: ' + err.message);
-            }
+  <span class="cm">// Step 1: Source Discovery</span>
+  state = state.<span class="fn">transition</span>(<span class="str">'fetching'</span>);
+  state = <span class="kw">await</span> <span class="cls">SourceDiscoveryAgent</span>.<span class="fn">run</span>(state, llm);
 
-            btn.disabled = false;
-            btn.innerHTML = 'Initiate Agents';
-        }
-    </script>
+  <span class="cm">// Step 2: Extraction</span>
+  state = state.<span class="fn">transition</span>(<span class="str">'extracting'</span>);
+  state = <span class="kw">await</span> <span class="cls">ExtractionAgent</span>.<span class="fn">run</span>(state);
+
+  <span class="cm">// Step 3: Validation → Recovery loop</span>
+  <span class="kw">while</span> (state.status === <span class="str">'validating'</span> || state.status === <span class="str">'recovering'</span>) {
+    <span class="kw">if</span> (state.status === <span class="str">'validating'</span>)
+      state = <span class="kw">await</span> <span class="cls">ValidationAgent</span>.<span class="fn">run</span>(state, llm, previousData);
+    <span class="kw">if</span> (state.status === <span class="str">'recovering'</span>)
+      state = <span class="kw">await</span> <span class="cls">RecoveryAgent</span>.<span class="fn">run</span>(state, llm);
+  }
+
+  <span class="cm">// Step 4: Persistence</span>
+  state = state.<span class="fn">transition</span>(<span class="str">'persisting'</span>);
+  state = <span class="kw">await</span> <span class="cls">PersistenceAgent</span>.<span class="fn">run</span>(state);
+  <span class="kw">return</span> <span class="fn">_buildResult</span>(state);
+}`,
+  },
+  'source-discovery': {
+    icon:'🔍', name:'Source Discovery Agent', type:'Agent',
+    typeClass:'tc-agent',
+    desc:'Fetches the DSE company page via HTTP, performs deterministic analysis (detects __NEXT_DATA__, checks render state, counts tables), then asks the LLM to confirm the best extraction strategy with a deterministic fallback if LLM is unavailable.',
+    files:['src/agents/source-discovery/SourceDiscoveryAgent.js'],
+    functions:['run(state, llm)', '_deterministicFallback(evidence, nextData)'],
+    deps:['DseTool.js','HtmlTool.js','instrumentSchema.js','LLMProvider'],
+    output:"Updated ScrapingState with { url, source: {html, nextData}, extractionStrategy, pageMetadata }",
+    code:`<span class="kw">async function</span> <span class="fn">run</span>(state, llm) {
+  <span class="cm">// 1. Fetch page via HTTP</span>
+  <span class="kw">const</span> fetchResult = <span class="kw">await</span> <span class="fn">fetchCompanyPage</span>(symbol);
+
+  <span class="cm">// 2. Deterministic analysis</span>
+  <span class="kw">const</span> nextData = <span class="fn">extractNextData</span>(fetchResult.html);
+  <span class="kw">const</span> isRendered = fetchResult.isRendered;
+
+  <span class="cm">// 3. LLM reasoning (with deterministic fallback)</span>
+  <span class="kw">const</span> sourceDecision = <span class="kw">await</span> llm.<span class="fn">generateStructured</span>({
+    system: systemPrompt,
+    user: JSON.<span class="fn">stringify</span>(evidenceSummary),
+    temperature: <span class="num">0</span>,
+  }, SourceDiscoveryOutputSchema);
+
+  <span class="kw">return</span> state.<span class="fn">update</span>({
+    status: <span class="str">'analyzing'</span>,
+    extractionStrategy: sourceDecision.sourceType, <span class="cm">// 'nextjs_data' | 'html' | 'browser'</span>
+    source: { url, html, nextData, statusCode, fetchedAt },
+  });
+}`,
+  },
+  'extraction-agent': {
+    icon:'⚗️', name:'Extraction Agent', type:'Agent',
+    typeClass:'tc-agent',
+    desc:'Runs the appropriate extraction strategy based on the source discovery decision. Falls through strategies in priority order if a strategy yields nothing. The LLM is NOT used here — extraction is entirely deterministic.',
+    files:['src/agents/extraction/ExtractionAgent.js'],
+    functions:['run(state)'],
+    deps:['nextjsDataStrategy.js','htmlStrategy.js','playwrightStrategy.js','DseTool.js'],
+    output:"Updated ScrapingState with { status:'validating', extractionStrategy, rawData, normalizedData }",
+    code:`<span class="cm">// Strategy priority: nextjs_data → html → playwright</span>
+<span class="kw">async function</span> <span class="fn">run</span>(state) {
+  <span class="kw">const</span> { html, nextData } = state.source;
+  <span class="kw">let</span> result = <span class="kw">null</span>;
+
+  <span class="cm">// Strategy 1: Next.js __NEXT_DATA__</span>
+  <span class="kw">if</span> (extractionStrategy === <span class="str">'nextjs_data'</span>)
+    result = <span class="fn">nextjsDataStrategy.extract</span>(html, symbol);
+
+  <span class="cm">// Strategy 2: HTML tables</span>
+  <span class="kw">if</span> (!result)
+    result = <span class="fn">htmlStrategy.extract</span>(html, symbol);
+
+  <span class="cm">// Strategy 3: Playwright browser rendering</span>
+  <span class="kw">if</span> (!result)
+    result = <span class="kw">await</span> <span class="fn">playwrightStrategy.extract</span>(url, symbol);
+
+  <span class="kw">return</span> state.<span class="fn">update</span>({ normalizedData: result.data });
+}`,
+  },
+  'validation-agent': {
+    icon:'✅', name:'Validation Agent', type:'Agent',
+    typeClass:'tc-agent',
+    desc:'Three-layer validation: (1) Zod schema check for required fields and types, (2) deterministic business rules for price/volume sanity, (3) LLM-powered historical anomaly detection comparing current values against previous DB values. Critical anomalies block persistence.',
+    files:['src/agents/validation/ValidationAgent.js'],
+    functions:['run(state, llm, previousData)', '_detectAnomalies(current, previous)', '_safeSubset(data)'],
+    deps:['instrumentSchema.js (NormalizedInstrumentSchema)','businessRules.js','LLMProvider'],
+    output:"Updated ScrapingState with { status:'persisting'|'recovering', validationResult, anomalies }",
+    code:`<span class="kw">async function</span> <span class="fn">run</span>(state, llm, previousData) {
+  <span class="cm">// Layer 1: Zod schema</span>
+  <span class="kw">const</span> schemaResult = <span class="cls">NormalizedInstrumentSchema</span>.<span class="fn">safeParse</span>(normalizedData);
+
+  <span class="cm">// Layer 2: Business rules</span>
+  <span class="kw">const</span> { errors: bizErrors, warnings } = <span class="fn">businessRules.validate</span>(normalizedData);
+
+  <span class="cm">// Layer 3: LLM anomaly detection</span>
+  <span class="kw">const</span> rawAnomalies = <span class="fn">_detectAnomalies</span>(normalizedData, previousData);
+  <span class="kw">if</span> (rawAnomalies.length > <span class="num">0</span>) {
+    <span class="kw">const</span> llmResult = <span class="kw">await</span> llm.<span class="fn">generateStructured</span>(..., LLMAnomalySchema);
+    <span class="cm">// Critical anomalies → recovering; safe → persisting</span>
+  }
+
+  <span class="kw">const</span> nextStatus = isValid ? <span class="str">'persisting'</span> : <span class="str">'recovering'</span>;
+  <span class="kw">return</span> state.<span class="fn">update</span>({ validationResult, status: nextStatus });
+}`,
+  },
+  'recovery-agent': {
+    icon:'↻', name:'Recovery Agent', type:'Agent',
+    typeClass:'tc-agent',
+    desc:'Called when extraction or validation fails. The LLM diagnoses the failure context and produces a recovery plan (strategy, actions, alternativeUrl). The plan is then executed deterministically. Guards against retrying already-failed strategies. Caps at maxRecoveryAttempts.',
+    files:['src/agents/recovery/RecoveryAgent.js'],
+    functions:['run(state, llm)', '_deterministicRecoveryPlan(context)'],
+    deps:['nextjsDataStrategy.js','htmlStrategy.js','playwrightStrategy.js','DseTool.js','RecoveryPlanSchema'],
+    output:"Updated ScrapingState with { status:'validating', normalizedData } or { status:'recovering' } if failed",
+    code:`<span class="kw">async function</span> <span class="fn">run</span>(state, llm) {
+  <span class="cm">// LLM diagnoses failure and returns strategy</span>
+  <span class="kw">const</span> recoveryPlan = <span class="kw">await</span> llm.<span class="fn">generateStructured</span>({
+    system: systemPrompt,
+    user: <span class="fn">JSON.stringify</span>(context), <span class="cm">// errors, tried strategies, page info</span>
+    temperature: <span class="num">0</span>,
+  }, RecoveryPlanSchema);
+
+  <span class="cm">// Execute plan: 'nextjs_data' | 'html' | 'playwright' | 'alternative_url'</span>
+  <span class="kw">switch</span> (recoveryPlan.strategy) {
+    <span class="kw">case</span> <span class="str">'playwright'</span>:
+      result = <span class="kw">await</span> <span class="fn">playwrightStrategy.extract</span>(url, symbol);
+      <span class="kw">break</span>;
+    <span class="cm">// ... other strategies</span>
+  }
+  <span class="kw">return</span> state.<span class="fn">update</span>({ status: <span class="str">'validating'</span>, normalizedData: result.data });
+}`,
+  },
+  'persistence-agent': {
+    icon:'💾', name:'Persistence Agent', type:'Agent',
+    typeClass:'tc-agent',
+    desc:'Receives validated instrument data and writes to MySQL inside a single atomic transaction. Only data that passed all validation layers reaches this agent. Uses typed repository methods — no raw SQL from LLM output. Writes to 4 tables, saves a raw snapshot, and logs anomalies.',
+    files:['src/agents/persistence/PersistenceAgent.js'],
+    functions:['run(state)'],
+    deps:['InstrumentRepository.js','MarketDataRepository.js','FinancialDataRepository.js','ListingDataRepository.js','ScrapingRunRepository.js','knex.js'],
+    output:"Updated ScrapingState with { status:'completed', persistenceResult: { recordsCreated, recordsUpdated } }",
+    code:`<span class="kw">async function</span> <span class="fn">run</span>(state) {
+  <span class="kw">const</span> db = <span class="fn">getDb</span>();
+
+  <span class="kw">await</span> db.<span class="fn">transaction</span>(<span class="kw">async</span> (trx) => {
+    <span class="cm">// 1. instruments (master record)</span>
+    <span class="kw">const</span> { id: instrumentId } =
+      <span class="kw">await</span> <span class="cls">InstrumentRepository</span>.<span class="fn">upsertTrx</span>(trx, normalizedData);
+
+    <span class="cm">// 2. market_data</span>
+    <span class="kw">await</span> <span class="cls">MarketDataRepository</span>.<span class="fn">upsertTrx</span>(trx, instrumentId, normalizedData, runId);
+
+    <span class="cm">// 3. financial_data</span>
+    <span class="kw">await</span> <span class="cls">FinancialDataRepository</span>.<span class="fn">upsertTrx</span>(trx, instrumentId, normalizedData, runId);
+
+    <span class="cm">// 4. listing_data</span>
+    <span class="kw">await</span> <span class="cls">ListingDataRepository</span>.<span class="fn">upsertTrx</span>(trx, instrumentId, normalizedData, runId);
+  }); <span class="cm">// COMMIT</span>
+}`,
+  },
+  'http-tool': {
+    icon:'🌐', name:'HTTP Fetcher', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'Low-level HTTP client using axios. Adds browser-like User-Agent headers to avoid bot detection. Applies the configured request timeout and retry logic. Returns raw response data.',
+    files:['src/tools/http/HttpTool.js'],
+    functions:['fetchUrl(url)', 'isDseUrl(url)', 'sleep(ms)'],
+    deps:['axios','config'],
+    output:'{ statusCode, data (HTML string), headers }',
+    code:`<span class="kw">async function</span> <span class="fn">fetchUrl</span>(url) {
+  <span class="kw">const</span> response = <span class="kw">await</span> axios.get(url, {
+    headers: {
+      <span class="str">'User-Agent'</span>: <span class="str">'Mozilla/5.0 ...'</span>,
+      <span class="str">'Accept'</span>: <span class="str">'text/html,application/xhtml+xml,...'</span>,
+    },
+    timeout: config.http.timeoutMs,
+    maxRedirects: <span class="num">5</span>,
+  });
+  <span class="kw">return</span> { statusCode: response.status, data: response.data };
+}`,
+  },
+  'dse-tool': {
+    icon:'📡', name:'DSE Tool', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'DSE-specific tool. Provides high-level methods for interacting with DSE: URL construction, company page fetching, __NEXT_DATA__ extraction, and company list fetching. All URL construction happens here.',
+    files:['src/tools/dse/DseTool.js'],
+    functions:['buildCompanyUrl(symbol)','fetchCompanyPage(symbol)','extractNextData(html)','extractCompanyFromNextData(nextData)','fetchCompanyListPage()'],
+    deps:['HttpTool.js','HtmlTool.js','config'],
+    output:'FetchResult { symbol, url, statusCode, html, fetchedAt, isRendered }',
+    code:`<span class="kw">function</span> <span class="fn">buildCompanyUrl</span>(symbol) {
+  <span class="kw">const</span> clean = symbol.trim().toUpperCase();
+  <span class="kw">return</span> \`\${config.dse.baseUrl}/company/\${clean}\`;
+}
+
+<span class="kw">function</span> <span class="fn">extractNextData</span>(html) {
+  <span class="kw">const</span> scripts = <span class="cls">HtmlTool</span>.<span class="fn">extractJsonScripts</span>(html);
+  <span class="kw">const</span> nextData = scripts.<span class="fn">find</span>(s => s.id === <span class="str">'__NEXT_DATA__'</span>);
+  <span class="kw">return</span> nextData?.data ?? <span class="kw">null</span>;
+}`,
+  },
+  'html-tool': {
+    icon:'📝', name:'HTML Parser (HtmlTool)', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'Cheerio-based HTML parsing utility. Provides reusable helpers for extracting text, tables, JSON script tags, and detecting whether a page is server-rendered (as opposed to a JS-only shell).',
+    files:['src/tools/html/HtmlTool.js'],
+    functions:['extractText(html)','extractTables(html)','extractJsonScripts(html)','isRenderedPage(html)'],
+    deps:['cheerio'],
+    output:'Structured text, tables, JSON objects extracted from HTML',
+    code:null,
+  },
+  'browser-tool': {
+    icon:'🎭', name:'Browser Tool (Playwright)', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'Playwright-based headless browser. Used as last resort when HTTP fetch yields a JavaScript-only shell. Supports waiting for network idle and specific DOM selectors before extracting HTML.',
+    files:['src/tools/browser/BrowserTool.js'],
+    functions:['launch(opts)','getPage(url, opts)','extractHtml(page)','close()'],
+    deps:['playwright'],
+    output:'Fully-rendered HTML string from headless Chromium',
+    code:null,
+  },
+  'nextjs-strategy': {
+    icon:'▲', name:'Next.js Data Strategy', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'Preferred extraction strategy. Parses __NEXT_DATA__ embedded JSON from Next.js pages. Walks props.pageProps to find the richest company data object, then maps known keys to the normalized schema.',
+    files:['src/extraction/strategies/nextjsDataStrategy.js'],
+    functions:['extract(html, symbol)', '_normalizeNextData(raw, symbol, nextData)'],
+    deps:['DseTool.js (extractNextData, extractCompanyFromNextData)','valueNormalizer.js'],
+    output:'ExtractionResult { success, strategy: "nextjs_data", data: NormalizedInstrumentData, warnings, errors }',
+    code:`<span class="kw">function</span> <span class="fn">extract</span>(html, symbol) {
+  <span class="kw">const</span> nextData = <span class="fn">extractNextData</span>(html);
+  <span class="kw">if</span> (!nextData) <span class="kw">return null</span>;
+
+  <span class="kw">const</span> raw = <span class="fn">extractCompanyFromNextData</span>(nextData);
+  <span class="kw">if</span> (!raw || Object.<span class="fn">keys</span>(raw).length === <span class="num">0</span>) <span class="kw">return null</span>;
+
+  <span class="kw">return</span> <span class="fn">_normalizeNextData</span>(raw, symbol, nextData);
+}`,
+  },
+  'html-strategy': {
+    icon:'🏷', name:'HTML Strategy', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'Fallback strategy that parses rendered HTML tables using Cheerio. Handles multiple DSE page layouts and normalizes values using value normalizers.',
+    files:['src/extraction/strategies/htmlStrategy.js'],
+    functions:['extract(html, symbol)'],
+    deps:['HtmlTool.js','valueNormalizer.js'],
+    output:'ExtractionResult { success, strategy: "html", data, warnings, errors }',
+    code:null,
+  },
+  'playwright-strategy': {
+    icon:'🎭', name:'Playwright Strategy', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'Last-resort strategy. Launches Playwright to render the page in a real Chromium browser, waits for the network to go idle, then extracts the fully-rendered HTML and applies the HTML parsing logic.',
+    files:['src/extraction/strategies/playwrightStrategy.js'],
+    functions:['extract(url, symbol, opts)'],
+    deps:['BrowserTool.js','htmlStrategy.js'],
+    output:'ExtractionResult { success, strategy: "playwright", data, warnings, errors }',
+    code:`<span class="kw">async function</span> <span class="fn">extract</span>(url, symbol, opts = {}) {
+  <span class="kw">const</span> browser = <span class="kw">await</span> <span class="fn">BrowserTool.launch</span>();
+  <span class="kw">const</span> html = <span class="kw">await</span> <span class="fn">BrowserTool.getPage</span>(url, {
+    waitNetworkIdle: opts.waitNetworkIdle,
+    waitMs: opts.waitMs || <span class="num">3000</span>,
+  });
+  <span class="kw">await</span> browser.<span class="fn">close</span>();
+  <span class="kw">return</span> <span class="fn">htmlStrategy.extract</span>(html, symbol);
+}`,
+  },
+  'business-rules': {
+    icon:'📏', name:'Business Rules Validator', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'Deterministic, configurable business rules for DSE instrument data. Validates: symbol presence, price sanity (no negatives, high >= low), volume sanity, and EPS/market-cap consistency. Does NOT call the LLM.',
+    files:['src/validation/businessRules.js'],
+    functions:['validate(data)'],
+    deps:[],
+    output:'{ errors: string[], warnings: string[] }',
+    code:`<span class="kw">function</span> <span class="fn">validate</span>(data) {
+  <span class="kw">const</span> errors = [], warnings = [];
+
+  <span class="cm">// Required: symbol</span>
+  <span class="kw">if</span> (!data.symbol) errors.<span class="fn">push</span>(<span class="str">'symbol is required'</span>);
+
+  <span class="cm">// Price sanity</span>
+  <span class="kw">if</span> (data.lastTradePrice < <span class="num">0</span>)
+    errors.<span class="fn">push</span>(\`lastTradePrice is negative: \${data.lastTradePrice}\`);
+  <span class="kw">if</span> (data.highPrice < data.lowPrice)
+    errors.<span class="fn">push</span>(\`highPrice < lowPrice\`);
+
+  <span class="kw">return</span> { errors, warnings };
+}`,
+  },
+  'llm-provider': {
+    icon:'🧠', name:'LLM Provider Factory', type:'Tool',
+    typeClass:'tc-tool',
+    desc:'Factory that returns the configured LLM provider (OpenAI, Anthropic, Google, etc.) based on environment variables. Provides a unified interface: generateStructured(prompt, schema) used by agents for reasoning tasks.',
+    files:['src/providers/llm/factory.js'],
+    functions:['getLLMProvider()', 'generateStructured(prompt, schema)'],
+    deps:['config'],
+    output:'LLMProvider instance with generateStructured()',
+    code:null,
+  },
+  'dse-website': {
+    icon:'🌐', name:'DSE Website', type:'External System',
+    typeClass:'tc-ext',
+    desc:'Dhaka Stock Exchange official website (dse.com.bd). Built with Next.js. Company pages are at /company/{SYMBOL} and embed structured data in __NEXT_DATA__ script tags. Sometimes serves a JS-only shell that requires browser rendering.',
+    files:['https://dse.com.bd/company/{SYMBOL}'],
+    functions:['GET /company/BATBC → HTML with __NEXT_DATA__'],
+    deps:[],
+    output:'HTML page (may contain __NEXT_DATA__ JSON, rendered tables, or JS shell)',
+    code:null,
+  },
+  'llm-api': {
+    icon:'🤖', name:'LLM API', type:'External System',
+    typeClass:'tc-ext',
+    desc:'External LLM API used by Source Discovery Agent (strategy selection), Validation Agent (anomaly classification), and Recovery Agent (failure diagnosis and planning). Called with temperature=0 for deterministic responses.',
+    files:['Configured via environment variable'],
+    functions:['generateStructured(prompt, schema)'],
+    deps:[],
+    output:'Structured JSON response validated against Zod schema',
+    code:null,
+  },
+  'mysql': {
+    icon:'🗄️', name:'MySQL', type:'Database',
+    typeClass:'tc-db',
+    desc:'Primary data store. Tables: scraping_runs (workflow tracking), instruments (master), market_data, financial_data, listing_data, scraping_errors, scraping_anomalies, scraping_snapshots. All writes happen through knex.js ORM.',
+    files:['src/database/knex.js','src/database/migrate.js'],
+    functions:['getDb()','initializeDatabase()','transaction(callback)'],
+    deps:['knex','mysql2'],
+    output:'MySQL connection pool (knex instance)',
+    code:`<span class="kw">const</span> knex = <span class="fn">Knex</span>({
+  client: <span class="str">'mysql2'</span>,
+  connection: {
+    host: config.db.host,
+    port: config.db.port,
+    user: config.db.user,
+    password: config.db.password,
+    database: config.db.database,
+  },
+  pool: { min: <span class="num">2</span>, max: <span class="num">10</span> },
+});`,
+  },
+  'repo-instrument': {
+    icon:'📋', name:'Instrument Repository', type:'Database',
+    typeClass:'tc-db',
+    desc:'CRUD for the instruments master table. Provides upsertTrx() which creates or updates an instrument record within a transaction. Returns the instrument ID used by other repositories.',
+    files:['src/repositories/InstrumentRepository.js'],
+    functions:['upsertTrx(trx, data)','findBySymbol(symbol)','findAll(opts)'],
+    deps:['knex.js'],
+    output:'{ id: instrumentId, created: boolean }',
+    code:null,
+  },
+  'repo-market': {
+    icon:'📈', name:'Market Data Repository', type:'Database',
+    typeClass:'tc-db',
+    desc:'CRUD for market_data table. Stores daily market data: lastTradePrice, closePrice, openPrice, highPrice, lowPrice, volume, value, tradeCount, marketCap.',
+    files:['src/repositories/MarketDataRepository.js'],
+    functions:['upsertTrx(trx, instrumentId, data, runId)','findLatestBySymbol(symbol)'],
+    deps:['knex.js'],
+    output:'{ created: boolean }',
+    code:null,
+  },
+  'repo-financial': {
+    icon:'💰', name:'Financial Data Repository', type:'Database',
+    typeClass:'tc-db',
+    desc:'CRUD for financial_data table. Stores financial metrics: eps, navps, peRatio, cashDividend, dividendYield, paidUpCapital, and structured JSON for interim/audited financial data.',
+    files:['src/repositories/FinancialDataRepository.js'],
+    functions:['upsertTrx(trx, instrumentId, data, runId)','findLatestBySymbol(symbol)'],
+    deps:['knex.js'],
+    output:'{ created: boolean }',
+    code:null,
+  },
+  'repo-scraping-run': {
+    icon:'🔖', name:'Scraping Run Repository', type:'Database',
+    typeClass:'tc-db',
+    desc:'CRUD for scraping_runs, scraping_errors, scraping_anomalies, and scraping_snapshots tables. Used by the Orchestrator to track workflow state in real-time and by the API to return run history.',
+    files:['src/repositories/ScrapingRunRepository.js'],
+    functions:['create(state)','update(state)','logErrors(runId, errors)','logAnomalies(runId, symbol, anomalies)','saveSnapshot(runId,...)','findByRunId(runId)','findRecentBySymbol(symbol, limit)'],
+    deps:['knex.js','uuid'],
+    output:'void / { rows }',
+    code:`<span class="kw">async function</span> <span class="fn">update</span>(state) {
+  <span class="kw">await</span> <span class="fn">db</span>(<span class="str">'scraping_runs'</span>)
+    .<span class="fn">where</span>({ run_id: state.runId })
+    .<span class="fn">update</span>({
+      status: state.status,
+      extraction_strategy: state.extractionStrategy,
+      validation_passed: state.validationResult?.valid,
+      completed_at: state.completedAt,
+      updated_at: <span class="kw">new</span> Date(),
+    });
+}`,
+  },
+};
+
+// ──────────────────────────────────────────────────────────────
+// Data flow steps
+// ──────────────────────────────────────────────────────────────
+const DF_STEPS = [
+  { icon:'👤', label:'User Request', desc:'Client sends POST /api/scrape/instrument { symbol: "BATBC" }', data:'{ "symbol": "BATBC", "force": false }' },
+  { icon:'⚙️', label:'API Endpoint', desc:'Express validates symbol and calls Orchestrator.scrape()', data:'{ "symbol": "BATBC" }' },
+  { icon:'🔍', label:'HTTP Fetch', desc:'HttpTool.fetchUrl() retrieves dse.com.bd/company/BATBC', data:'{ "statusCode": 200, "bytes": 145728, "isRendered": true }' },
+  { icon:'▲', label:'__NEXT_DATA__ Detection', desc:'extractNextData() finds embedded Next.js JSON in script#__NEXT_DATA__', data:'{ "hasNextData": true, "strategy": "nextjs_data", "confidence": 0.95 }' },
+  { icon:'⚗️', label:'Structured Extraction', desc:'nextjsDataStrategy.extract() walks props.pageProps and maps to schema', data:'{ "symbol": "BATBC", "lastTradePrice": 412.5, "volume": 78423, "eps": 20.75, ... }' },
+  { icon:'📏', label:'Normalization', desc:'valueNormalizer converts raw strings to typed numbers/dates', data:'{ "lastTradePrice": 412.5, "eps": 20.75, "peRatio": 19.88, "fieldCount": 86 }' },
+  { icon:'✅', label:'Validation', desc:'Zod schema + business rules + LLM anomaly check', data:'{ "valid": true, "schemaErrors": 0, "businessErrors": 0, "warnings": 2, "anomalies": [] }' },
+  { icon:'💾', label:'Transaction COMMIT', desc:'PersistenceAgent upserts 4 tables in one MySQL transaction', data:'{ "operation": "UPSERT", "tables": ["instruments","market_data","financial_data","listing_data"], "recordsUpdated": 4 }' },
+  { icon:'🗄️', label:'MySQL Storage', desc:'Data stored and indexed in MySQL for API consumption', data:'{ "status": "completed", "recordsCreated": 0, "recordsUpdated": 4 }' },
+];
+
+// ──────────────────────────────────────────────────────────────
+// Execution trace
+// ──────────────────────────────────────────────────────────────
+const TRACE_LINES = [
+  { time:'16:32:01.102', file:'src/api/routes/scrape.js', fn:'router.post("/instrument")', desc:'POST /api/scrape/instrument received', nodeId:'api-scrape' },
+  { time:'16:32:01.115', file:'src/agents/orchestrator/Orchestrator.js', fn:'scrape("BATBC")', desc:'Scraping run created, state = pending', nodeId:'orchestrator' },
+  { time:'16:32:01.130', file:'src/workflow/state/ScrapingState.js', fn:'transition("fetching")', desc:'State transition: pending → fetching', nodeId:'scraping-state' },
+  { time:'16:32:01.135', file:'src/agents/source-discovery/SourceDiscoveryAgent.js', fn:'run(state, llm)', desc:'Source Discovery Agent started', nodeId:'source-discovery' },
+  { time:'16:32:01.140', file:'src/tools/dse/DseTool.js', fn:'fetchCompanyPage("BATBC")', desc:'Building URL: dse.com.bd/company/BATBC', nodeId:'dse-tool' },
+  { time:'16:32:01.145', file:'src/tools/http/HttpTool.js', fn:'fetchUrl(url)', desc:'HTTP GET request dispatched', nodeId:'http-tool' },
+  { time:'16:32:01.821', file:'src/tools/dse/DseTool.js', fn:'extractNextData(html)', desc:'HTTP 200 OK — 145KB received; detecting __NEXT_DATA__', nodeId:'dse-tool' },
+  { time:'16:32:01.825', file:'src/tools/html/HtmlTool.js', fn:'extractJsonScripts(html)', desc:'script#__NEXT_DATA__ found — structured extraction preferred', nodeId:'html-tool' },
+  { time:'16:32:02.100', file:'src/agents/source-discovery/SourceDiscoveryAgent.js', fn:'llm.generateStructured()', desc:'LLM confirms: nextjs_data strategy, confidence 0.95', nodeId:'source-discovery' },
+  { time:'16:32:02.110', file:'src/agents/extraction/ExtractionAgent.js', fn:'run(state)', desc:'Extraction Agent: trying nextjs_data strategy', nodeId:'extraction-agent' },
+  { time:'16:32:02.115', file:'src/extraction/strategies/nextjsDataStrategy.js', fn:'extract(html, "BATBC")', desc:'Walking props.pageProps — 86 fields mapped', nodeId:'nextjs-strategy' },
+  { time:'16:32:02.220', file:'src/agents/validation/ValidationAgent.js', fn:'run(state, llm, prevData)', desc:'Validation Agent started — Layer 1: Zod schema', nodeId:'validation-agent' },
+  { time:'16:32:02.225', file:'src/validation/businessRules.js', fn:'validate(normalizedData)', desc:'Layer 2: Business rules — 0 errors, 2 warnings', nodeId:'business-rules' },
+  { time:'16:32:02.500', file:'src/agents/validation/ValidationAgent.js', fn:'llm.generateStructured()', desc:'Layer 3: LLM anomaly check — SAFE, no critical anomalies', nodeId:'validation-agent' },
+  { time:'16:32:02.510', file:'src/agents/persistence/PersistenceAgent.js', fn:'run(state)', desc:'Validation PASSED — Persistence Agent started', nodeId:'persistence-agent' },
+  { time:'16:32:02.515', file:'src/database/knex.js', fn:'db.transaction(async (trx) => ...)', desc:'BEGIN TRANSACTION', nodeId:'mysql' },
+  { time:'16:32:02.520', file:'src/repositories/InstrumentRepository.js', fn:'upsertTrx(trx, data)', desc:'UPSERT instruments table', nodeId:'repo-instrument' },
+  { time:'16:32:02.525', file:'src/repositories/MarketDataRepository.js', fn:'upsertTrx(trx, id, data, runId)', desc:'UPSERT market_data table', nodeId:'repo-market' },
+  { time:'16:32:02.530', file:'src/repositories/FinancialDataRepository.js', fn:'upsertTrx(trx, id, data, runId)', desc:'UPSERT financial_data table', nodeId:'repo-financial' },
+  { time:'16:32:02.535', file:'src/database/knex.js', fn:'trx.commit()', desc:'COMMIT — 4 rows updated', nodeId:'mysql' },
+  { time:'16:32:02.540', file:'src/agents/orchestrator/Orchestrator.js', fn:'_buildResult(state)', desc:'Workflow completed — status: completed, durationMs: 1438', nodeId:'orchestrator' },
+];
+
+// ──────────────────────────────────────────────────────────────
+// File dependency tree
+// ──────────────────────────────────────────────────────────────
+const DEP_TREE = `<span class="dep-root">src/app.js</span>
+├── <span class="dep-connector">api/routes/</span>
+│   ├── <span class="dep-file" onclick="selectNode('api-scrape')">scrape.js</span>
+│   │   └── <span class="dep-file" onclick="selectNode('orchestrator')">agents/orchestrator/Orchestrator.js</span>
+│   │       ├── <span class="dep-file" onclick="selectNode('source-discovery')">agents/source-discovery/SourceDiscoveryAgent.js</span>
+│   │       │   ├── <span class="dep-file" onclick="selectNode('dse-tool')">tools/dse/DseTool.js</span>
+│   │       │   │   ├── <span class="dep-file" onclick="selectNode('http-tool')">tools/http/HttpTool.js</span>
+│   │       │   │   └── <span class="dep-file" onclick="selectNode('html-tool')">tools/html/HtmlTool.js</span>
+│   │       │   └── <span class="dep-file">extraction/schemas/instrumentSchema.js</span>
+│   │       ├── <span class="dep-file" onclick="selectNode('extraction-agent')">agents/extraction/ExtractionAgent.js</span>
+│   │       │   ├── <span class="dep-file" onclick="selectNode('nextjs-strategy')">extraction/strategies/nextjsDataStrategy.js</span>
+│   │       │   ├── <span class="dep-file" onclick="selectNode('html-strategy')">extraction/strategies/htmlStrategy.js</span>
+│   │       │   └── <span class="dep-file" onclick="selectNode('playwright-strategy')">extraction/strategies/playwrightStrategy.js</span>
+│   │       │       └── <span class="dep-file" onclick="selectNode('browser-tool')">tools/browser/BrowserTool.js</span>
+│   │       ├── <span class="dep-file" onclick="selectNode('validation-agent')">agents/validation/ValidationAgent.js</span>
+│   │       │   ├── <span class="dep-file" onclick="selectNode('business-rules')">validation/businessRules.js</span>
+│   │       │   └── <span class="dep-file">extraction/schemas/instrumentSchema.js</span>
+│   │       ├── <span class="dep-file" onclick="selectNode('recovery-agent')">agents/recovery/RecoveryAgent.js</span>
+│   │       │   ├── <span class="dep-file" onclick="selectNode('nextjs-strategy')">extraction/strategies/nextjsDataStrategy.js</span>
+│   │       │   ├── <span class="dep-file" onclick="selectNode('html-strategy')">extraction/strategies/htmlStrategy.js</span>
+│   │       │   └── <span class="dep-file" onclick="selectNode('playwright-strategy')">extraction/strategies/playwrightStrategy.js</span>
+│   │       └── <span class="dep-file" onclick="selectNode('persistence-agent')">agents/persistence/PersistenceAgent.js</span>
+│   │           ├── <span class="dep-file" onclick="selectNode('repo-instrument')">repositories/InstrumentRepository.js</span>
+│   │           ├── <span class="dep-file" onclick="selectNode('repo-market')">repositories/MarketDataRepository.js</span>
+│   │           ├── <span class="dep-file" onclick="selectNode('repo-financial')">repositories/FinancialDataRepository.js</span>
+│   │           └── <span class="dep-file" onclick="selectNode('mysql')">database/knex.js</span>
+│   └── <span class="dep-file" onclick="selectNode('api-instruments')">instruments.js</span>
+└── <span class="dep-file" onclick="selectNode('scraping-state')">workflow/state/ScrapingState.js</span>`;
+
+// ──────────────────────────────────────────────────────────────
+// UI Logic
+// ──────────────────────────────────────────────────────────────
+let selectedNode = null;
+
+function switchView(view, btn) {
+  document.querySelectorAll('.vtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-arch').className = view==='arch' ? 'arch-view' : 'arch-view hidden';
+  document.getElementById('view-dataflow').className = view==='dataflow' ? 'dataflow-view active' : 'dataflow-view';
+  document.getElementById('view-trace').className = view==='trace' ? 'trace-view active' : 'trace-view';
+  document.getElementById('view-deps').className = view==='deps' ? 'filedep-view active' : 'filedep-view';
+}
+
+function selectNode(id) {
+  const node = NODES[id];
+  if (!node) return;
+
+  // Deselect previous
+  document.querySelectorAll('.arch-node.selected').forEach(el => el.classList.remove('selected'));
+
+  // Select new
+  const el = document.querySelector(`.arch-node[data-id="${id}"]`);
+  if (el) el.classList.add('selected');
+  selectedNode = id;
+
+  // Fill panel
+  document.getElementById('dpEmpty').style.display = 'none';
+  const cont = document.getElementById('dpContent');
+  cont.style.display = 'flex';
+  cont.style.flexDirection = 'column';
+
+  document.getElementById('dpIcon').textContent = node.icon;
+  document.getElementById('dpName').textContent = node.name;
+  document.getElementById('dpTypeBadge').innerHTML = `<span class="type-chip ${node.typeClass}">${node.type}</span>`;
+  document.getElementById('dpDesc').textContent = node.desc;
+
+  // Files
+  document.getElementById('dpFiles').innerHTML = node.files.map(f =>
+    `<div class="dp-file">📄 ${f}</div>`
+  ).join('');
+
+  // Functions
+  document.getElementById('dpFunctions').innerHTML = node.functions.map(f =>
+    `<div class="dp-fn">${f}</div>`
+  ).join('');
+
+  // Dependencies
+  const depsEl = document.getElementById('dpDeps');
+  if (node.deps && node.deps.length > 0) {
+    depsEl.innerHTML = node.deps.map(d => `<span class="dep-tag">${d}</span>`).join('');
+    document.getElementById('dpDepsSection').style.display = 'block';
+  } else {
+    document.getElementById('dpDepsSection').style.display = 'none';
+  }
+
+  // Output
+  if (node.output) {
+    document.getElementById('dpOutput').textContent = node.output;
+    document.getElementById('dpOutputSection').style.display = 'block';
+  } else {
+    document.getElementById('dpOutputSection').style.display = 'none';
+  }
+
+  // Code
+  const codeEl = document.getElementById('dpCode');
+  if (node.code) {
+    codeEl.innerHTML = `
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-file">${node.files[0] || ''}</span>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span class="code-lang">JavaScript</span>
+            <button class="code-copy" onclick="copyCode(this)">Copy</button>
+          </div>
+        </div>
+        <div class="code-body">${node.code}</div>
+      </div>`;
+  } else {
+    codeEl.innerHTML = '<div style="color:var(--text3);font-size:0.78rem;">No code snippet available for this component.</div>';
+  }
+}
+
+function clearSelection() {
+  document.querySelectorAll('.arch-node.selected').forEach(el => el.classList.remove('selected'));
+  selectedNode = null;
+  document.getElementById('dpEmpty').style.display = 'flex';
+  document.getElementById('dpContent').style.display = 'none';
+}
+
+function jumpLayer(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    // switch to arch view if not already
+    const archView = document.getElementById('view-arch');
+    if (archView.classList.contains('hidden')) {
+      archView.className = 'arch-view';
+    }
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.style.boxShadow = '0 0 0 2px rgba(139,92,246,0.6)';
+    setTimeout(() => { el.style.boxShadow = ''; }, 2000);
+  }
+}
+
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('.code-body').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✓ Copied';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// Build data flow
+function buildDataFlow() {
+  const el = document.getElementById('dfSteps');
+  let html = '';
+  DF_STEPS.forEach((s, i) => {
+    html += `<div class="df-step" id="dfs-${i}">
+      <div class="df-icon">${s.icon}</div>
+      <div style="flex:1;">
+        <div class="df-label">${s.label}</div>
+        <div class="df-desc">${s.desc}</div>
+        <div class="df-data">${s.data}</div>
+      </div>
+    </div>`;
+    if (i < DF_STEPS.length - 1) {
+      html += `<div class="df-arrow">↓</div>`;
+    }
+  });
+  el.innerHTML = html;
+}
+
+// Build trace
+function buildTrace() {
+  const el = document.getElementById('traceLines');
+  let html = '';
+  TRACE_LINES.forEach((t, i) => {
+    html += `<div class="trace-line" onclick="selectNode('${t.nodeId}')">
+      <div class="trace-time">${t.time}</div>
+      <div>
+        <div><span class="trace-file">${t.file}</span><span class="trace-fn"> ${t.fn}</span></div>
+        <div class="trace-desc">${t.desc}</div>
+      </div>
+    </div>`;
+    if (i < TRACE_LINES.length - 1) {
+      html += `<div class="trace-arrow">↓</div>`;
+    }
+  });
+  el.innerHTML = html;
+}
+
+// Build dep tree
+function buildDepTree() {
+  document.getElementById('depTree').innerHTML = `<div class="dep-tree">${DEP_TREE}</div>`;
+}
+
+// Init
+buildDataFlow();
+buildTrace();
+buildDepTree();
+</script>
 </body>
 </html>
