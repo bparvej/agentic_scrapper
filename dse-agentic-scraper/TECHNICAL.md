@@ -23,6 +23,7 @@
 12. [Coding Conventions](#12-coding-conventions)
 13. [Extension Guide](#13-extension-guide)
 14. [Rules for AI Coding Agents](#14-rules-for-ai-coding-agents)
+15. [Future Roadmap & Scaling Architecture](#15-future-roadmap--scaling-architecture)
 
 ---
 
@@ -751,3 +752,21 @@ All queries are written by humans in repository files.
 - Every new business rule needs a test covering the happy path and the violation
 - Extraction strategy tests must use fixtures, not live network calls
 - Integration tests that hit the database must clean up after themselves
+
+---
+
+## 15. Future Roadmap & Scaling Architecture
+
+For the complete technical engineering specification, distributed architecture designs, and copy-paste implementation blueprints for scaling this system, refer to:
+
+👉 **[FUTURE_ENHANCEMENTS.md](docs/FUTURE_ENHANCEMENTS.md)**
+
+Topics covered:
+1. Distributed Job Orchestration with BullMQ and Redis
+2. Bangladesh Residential Proxy Pools & Playwright Resource Recycling
+3. Autonomous Selector Self-Healing using LLMs
+4. TimescaleDB Time-Series Quotes and High-Frequency Ticks
+5. Laravel-Style Date-Wise Log Streamers and In-Memory Ring Buffers
+6. Multi-Exchange Adapters (CSE & Treasury Bonds)
+7. Automated Financial Indicators (Altman Z-Score, Piotroski F-Score) & Alert Dispatchers
+

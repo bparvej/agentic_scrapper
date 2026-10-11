@@ -738,13 +738,17 @@ REQUEST_TIMEOUT_MS=20000
 
 ---
 
-## 21. Future Improvements
+## 21. Future Improvements & Enhancements
 
-- **Scheduled scraping** — integrate a proper job scheduler (Bull, node-cron)
-- **Admin UI** — React dashboard for viewing runs, anomalies, and data
-- **More symbols** — auto-discover all listed DSE symbols
-- **Historical data** — store time-series price data
-- **PostgreSQL migration** — switch database client in `.env`
-- **Notifications** — alert on critical anomalies via email/Slack
-- **CSE support** — extend to Chittagong Stock Exchange
-- **Distributed scraping** — multi-worker with Redis queue
+For the comprehensive engineering roadmap, architecture blueprints, and implementation code recipes, see:
+👉 **[FUTURE_ENHANCEMENTS.md](docs/FUTURE_ENHANCEMENTS.md)**
+
+Key roadmap highlights:
+- **Distributed Scraping & Queues:** BullMQ + Redis worker pool for multi-worker concurrency and rate limiting.
+- **Autonomous Selector Healing:** LLM-driven CSS/XPath auto-repair when DSE website updates layout.
+- **High-Resilience Stealth:** Residential Bangladesh proxy pools and warm Playwright browser pools.
+- **Time-Series Scaling:** TimescaleDB hyper-tables for minute-by-minute tick capture and historical PE trends.
+- **Enterprise Observability:** Laravel-style date-partitioned logging (`/logs.html`) and trace ID propagation.
+- **Multi-Exchange Coverage:** Support for Chittagong Stock Exchange (CSE), SME board, and Treasury Bonds.
+- **Automated Alerts:** Real-time push notifications via Telegram and Discord for critical anomalies.
+
