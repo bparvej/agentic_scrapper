@@ -2,6 +2,7 @@
 
 const winston = require('winston');
 const config = require('../config');
+const { LogStoreTransport } = require('./logStore');
 
 /**
  * Structured logger.
@@ -21,6 +22,7 @@ const transports = [
         ? combine(timestamp(), json())
         : combine(colorize(), simple()),
   }),
+  new LogStoreTransport(),
 ];
 
 const logger = winston.createLogger({

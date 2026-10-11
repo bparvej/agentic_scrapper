@@ -11,6 +11,7 @@ const instrumentRoutes = require('./api/routes/instruments');
 const healthRoutes = require('./api/routes/health');
 const debugRoutes = require('./api/routes/debug');
 const workflowRoutes = require('./api/routes/workflow');
+const logsRoutes = require('./api/routes/logs');
 
 const log = logger.createChild({ module: 'app' });
 
@@ -39,6 +40,7 @@ function createApp() {
   app.use('/api/health', healthRoutes);
   app.use('/api/debug', debugRoutes);
   app.use('/api/workflow', workflowRoutes);
+  app.use('/api/logs', logsRoutes);
 
   // 404
   app.use((req, res) => {

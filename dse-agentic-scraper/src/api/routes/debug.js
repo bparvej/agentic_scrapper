@@ -1,11 +1,6 @@
-'use strict';
-
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
-
 const router = express.Router();
+const logStore = require('../../logging/logStore');
 
 /**
  * GET /api/debug/stream
@@ -19,33 +14,12 @@ router.get('/stream', (req, res) => {
     'Connection': 'keep-alive'
   });
 
-  const logFile = path.join(__dirname, '../../../logs/combined.log');
-  
-  if (!fs.existsSync(logFile)) {
-    if (!fs.existsSync(path.dirname(logFile))) {
-      fs.mkdirSync(path.dirname(logFile), { recursive: true });
-    }
-    fs.writeFileSync(logFile, '');
-  }
+  res.write(`data: ${JSON.stringify({ type: 'ping', message: 'Log stream connected' })}\n\n`);
 
-  const tail = spawn('tail', ['-f', '-n', '50', logFile]);
-
-  tail.stdout.on('data', (data) => {
-    const lines = data.toString().split('\n');
-    lines.forEach(line => {
-      if (line.trim()) {
-        try {
-          const parsed = JSON.parse(line);
-          res.write(`data: ${JSON.stringify(parsed)}\n\n`);
-        } catch (e) {
-          res.write(`data: ${JSON.stringify({ message: line })}\n\n`);
-        }
-      }
-    });
-  });
+  logStore.addSseSubscriber(res);
 
   req.on('close', () => {
-    tail.kill();
+    logStore.removeSseSubscriber(res);
   });
 });
 
