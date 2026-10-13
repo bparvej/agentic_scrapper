@@ -40,7 +40,7 @@ const NormalizedInstrumentSchema = z.object({
   // Identity
   symbol: z.string().min(1),
   companyName: z.string().nullable().optional(),
-  scripCode: z.string().nullable().optional(),
+  scripCode: z.union([z.string(), z.number()]).transform((v) => (v != null ? String(v) : null)).nullable().optional(),
   isin: z.string().nullable().optional(),
   sector: z.string().nullable().optional(),
   industry: z.string().nullable().optional(),
@@ -90,7 +90,7 @@ const NormalizedInstrumentSchema = z.object({
   peRatio: z.number().nullable().optional(),
   dilutedPeRatio: z.number().nullable().optional(),
 
-  // Corporate actions
+  // Corporate actions & Disclosures
   dividendYield: z.number().nullable().optional(),
   cashDividend: z.number().nullable().optional(),
   bonusIssue: z.string().nullable().optional(),
@@ -98,10 +98,13 @@ const NormalizedInstrumentSchema = z.object({
   agmDate: z.string().nullable().optional(),       // ISO date
   yearEnded: z.string().nullable().optional(),
   dividendYear: z.string().nullable().optional(),
-  corporateActions: z.array(z.record(z.unknown())).optional().default([]),
-  interimFinancialPerformance: z.array(z.record(z.unknown())).optional().default([]),
-  financialPerformanceAudited: z.array(z.record(z.unknown())).optional().default([]),
-  announcements: z.array(z.record(z.unknown())).optional().default([]),
+  corporateActions: z.union([z.array(z.record(z.unknown())), z.record(z.unknown()), z.null()]).optional(),
+  interimFinancialPerformance: z.union([z.array(z.record(z.unknown())), z.record(z.unknown()), z.null()]).optional(),
+  interimFinancials: z.union([z.array(z.record(z.unknown())), z.record(z.unknown()), z.null()]).optional(),
+  financialPerformanceAudited: z.union([z.array(z.record(z.unknown())), z.record(z.unknown()), z.null()]).optional(),
+  auditedFinancials: z.union([z.array(z.record(z.unknown())), z.record(z.unknown()), z.null()]).optional(),
+  announcements: z.union([z.array(z.record(z.unknown())), z.record(z.unknown()), z.null()]).optional(),
+  dividendHistory: z.union([z.array(z.record(z.unknown())), z.record(z.unknown()), z.null()]).optional(),
 
   // Debt
   shortTermLoan: z.number().nullable().optional(),
@@ -110,7 +113,7 @@ const NormalizedInstrumentSchema = z.object({
   operationalStatus: z.string().nullable().optional(),
 
   // Listing
-  listingYear: z.string().nullable().optional(),
+  listingYear: z.union([z.string(), z.number()]).transform((v) => (v != null ? String(v) : null)).nullable().optional(),
   debutTradingDate: z.string().nullable().optional(),  // ISO date
   electronicShare: z.string().nullable().optional(),
 
@@ -155,7 +158,7 @@ const ValidationResultSchema = z.object({
 // -----------------------------------------------------------------
 
 const SourceDiscoveryOutputSchema = z.object({
-  sourceType: z.enum(['api', 'nextjs_data', 'html', 'browser']),
+  sourceType: z.enum(['api', 'nextjs_data', 'dse_flight', 'html', 'browser']),
   source: z.string(),
   confidence: z.number().min(0).max(1),
   reason: z.string(),
@@ -183,7 +186,7 @@ const PageAnalysisOutputSchema = z.object({
 });
 
 const RecoveryPlanSchema = z.object({
-  strategy: z.enum(['nextjs_data', 'html', 'playwright', 'alternative_url']),
+  strategy: z.enum(['dse_flight', 'nextjs_data', 'html', 'playwright', 'alternative_url']),
   reason: z.string(),
   actions: z.array(z.string()).default([]),
   alternativeUrl: z.string().optional(),

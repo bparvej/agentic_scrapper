@@ -207,7 +207,7 @@ async function _executeScrape(symbol, runId, demo) {
 
   // Determine success: extraction succeeded if we have data, even if DB persistence failed
   const hasData = result.data && Object.keys(result.data).length > 0;
-  const dbFailed = result.status === 'failed' && hasData;
+  const dbFailed = (result.status === 'failed' || result.persistenceResult?.skipped || (result.errors && result.errors.some(e => /persistence|database|db|connect/i.test(e)))) && hasData;
   const extractionSucceeded = result.status === 'completed' || dbFailed;
 
   // Source discovery completed
@@ -229,12 +229,14 @@ async function _executeScrape(symbol, runId, demo) {
     file: 'src/agents/source-discovery/SourceDiscoveryAgent.js',
     function: 'run',
     status: 'completed',
-    message: `Strategy selected: ${result.extractionStrategy || 'nextjs_data'}`,
+    message: `Strategy selected: ${result.extractionStrategy || 'dse_flight'}`,
     data: {
-      strategy: result.extractionStrategy || 'nextjs_data',
-      reason: result.extractionStrategy === 'nextjs_data'
-        ? '__NEXT_DATA__ found — structured extraction preferred'
-        : 'HTML strategy selected',
+      strategy: result.extractionStrategy || 'dse_flight',
+      reason: result.extractionStrategy === 'dse_flight'
+        ? 'DSE React Server Components (self.__next_f) found — structured flight stream preferred'
+        : (result.extractionStrategy === 'nextjs_data'
+          ? '__NEXT_DATA__ found — structured extraction preferred'
+          : 'HTML strategy selected'),
     },
   });
 

@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { RecoveryPlanSchema } = require('../../extraction/schemas/instrumentSchema');
+const dseFlightStrategy = require('../../extraction/strategies/dseFlightStrategy');
 const nextjsDataStrategy = require('../../extraction/strategies/nextjsDataStrategy');
 const htmlStrategy = require('../../extraction/strategies/htmlStrategy');
 const playwrightStrategy = require('../../extraction/strategies/playwrightStrategy');
@@ -105,6 +106,11 @@ async function run(state, llm) {
 
   try {
     switch (recoveryPlan.strategy) {
+      case 'dse_flight': {
+        result = await dseFlightStrategy.extract(symbol);
+        break;
+      }
+
       case 'nextjs_data': {
         const html = state.source?.html || '';
         result = nextjsDataStrategy.extract(html, symbol);

@@ -355,8 +355,8 @@ const META = {
   user:{ ico:'👤', nm:'User / API Consumer', tp:'External', file:'src/api/routes/scrape.js', fn:'POST /api/scrape/instrument', desc:'The entry point. A client sends a POST request with a DSE instrument symbol.' },
   api:{ ico:'⚙️', nm:'API Endpoint', tp:'Application Service', file:'src/api/routes/scrape.js', fn:'router.post("/instrument")', desc:'Express route validates the symbol and delegates to the Orchestrator.' },
   orch:{ ico:'🤖', nm:'Orchestrator Agent', tp:'Agent', file:'src/agents/orchestrator/Orchestrator.js', fn:'scrape(symbol, opts)', desc:'Master workflow controller. Drives the state machine: pending → fetching → analyzing → extracting → validating → [recovering] → persisting → completed.' },
-  src:{ ico:'🔍', nm:'Source Discovery Agent', tp:'Agent', file:'src/agents/source-discovery/SourceDiscoveryAgent.js', fn:'run(state, llm)', desc:'Fetches the DSE company page via HTTP, detects __NEXT_DATA__, and uses LLM reasoning to select the extraction strategy.' },
-  ext:{ ico:'⚗️', nm:'Extraction Agent', tp:'Agent', file:'src/agents/extraction/ExtractionAgent.js', fn:'run(state)', desc:'Tries strategies in priority order: nextjsDataStrategy → htmlStrategy → playwrightStrategy. Returns normalized data.' },
+  src:{ ico:'🔍', nm:'Source Discovery Agent', tp:'Agent', file:'src/agents/source-discovery/SourceDiscoveryAgent.js', fn:'run(state, llm)', desc:'Fetches the DSE company page via HTTP, detects RSC flight stream (__next_f), and selects the extraction strategy.' },
+  ext:{ ico:'⚗️', nm:'Extraction Agent', tp:'Agent', file:'src/agents/extraction/ExtractionAgent.js', fn:'run(state)', desc:'Tries strategies in priority order: dseFlightStrategy (RSC stream) → nextjsDataStrategy → htmlStrategy → playwrightStrategy. Returns normalized data.' },
   val:{ ico:'✅', nm:'Validation Agent', tp:'Agent', file:'src/agents/validation/ValidationAgent.js', fn:'run(state, llm, previousData)', desc:'3-layer validation: Zod schema → business rules → LLM anomaly detection vs historical data.' },
   rec:{ ico:'↻', nm:'Recovery Agent', tp:'Agent', file:'src/agents/recovery/RecoveryAgent.js', fn:'run(state, llm)', desc:'LLM diagnoses failure and selects an alternative strategy. Retries and re-validates.' },
   pers:{ ico:'💾', nm:'Persistence Agent', tp:'Agent', file:'src/agents/persistence/PersistenceAgent.js', fn:'run(state)', desc:'Writes validated data to MySQL in a single atomic transaction: instruments, market_data, financial_data, listing_data.' },
@@ -503,15 +503,18 @@ function showRes(data,ok){
   document.getElementById('resTtl').textContent=ok?'SCRAPING COMPLETED':'SCRAPING FAILED';
   document.getElementById('resSub').textContent=data?.symbol?'Instrument: '+data.symbol:'';
   const dur=data?.durationMs?(data.durationMs/1000).toFixed(2)+'s':'—';
+  const payload = data?.data || data;
+  const newsCount = Array.isArray(payload?.announcements) ? payload.announcements.length : 0;
+  const corpCount = Array.isArray(payload?.corporateActions) ? payload.corporateActions.length : 0;
   document.getElementById('resGrid').innerHTML=`
     <div class="res-stat"><div class="res-lbl">Duration</div><div class="res-val">${dur}</div></div>
     <div class="res-stat"><div class="res-lbl">Strategy</div><div class="res-val" style="font-size:0.78rem;">${data?.extractionStrategy||'—'}</div></div>
     <div class="res-stat"><div class="res-lbl">Fields Extracted</div><div class="res-val ${ok?'ok':'fail'}">${data?.fieldCount||'—'}</div></div>
     <div class="res-stat"><div class="res-lbl">Validation</div><div class="res-val ${ok?'ok':'fail'}">${ok?'PASSED':'FAILED'}</div></div>
-    <div class="res-stat"><div class="res-lbl">Records Created</div><div class="res-val">${data?.recordsCreated??'—'}</div></div>
-    <div class="res-stat"><div class="res-lbl">Records Updated</div><div class="res-val">${data?.recordsUpdated??'—'}</div></div>
-    <div class="res-stat"><div class="res-lbl">Warnings</div><div class="res-val ${(data?.warnings?.length||0)>0?'warn':''}">${data?.warnings?.length||0}</div></div>
-    <div class="res-stat"><div class="res-lbl">DB Status</div><div class="res-val ${ok?'ok':'fail'}">${ok?'UPDATED':'SKIPPED'}</div></div>
+    <div class="res-stat"><div class="res-lbl">News / Announcements</div><div class="res-val ok">${newsCount} items</div></div>
+    <div class="res-stat"><div class="res-lbl">Corporate Actions</div><div class="res-val ok">${corpCount} records</div></div>
+    <div class="res-stat"><div class="res-lbl">Records Saved / Updated</div><div class="res-val">${(data?.recordsCreated || 0) + (data?.recordsUpdated || 0)}</div></div>
+    <div class="res-stat"><div class="res-lbl">DB Status</div><div class="res-val ${ok?'ok':'fail'}">${ok?'PROCESSED':'SKIPPED'}</div></div>
   `;
   document.getElementById('resData').textContent=JSON.stringify(data?.data||data,null,2);
 }

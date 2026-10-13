@@ -45,6 +45,7 @@ async function run(state, llm) {
   const html = fetchResult.html;
 
   // --- Deterministic analysis (no LLM) ---
+  const hasFlightData = /self\.__next_f/.test(html);
   const nextData = extractNextData(html);
   const isRendered = fetchResult.isRendered;
   const bodyTextLength = HtmlTool.extractText(html).length;
@@ -56,6 +57,7 @@ async function run(state, llm) {
     isRendered,
     bodyTextLength,
     tableCount: tables.length,
+    hasFlightData,
     hasNextData: !!nextData,
     jsonScriptCount: jsonScripts.length,
   });
@@ -67,6 +69,7 @@ async function run(state, llm) {
     bodyTextLength,
     isRendered,
     tableCount: tables.length,
+    hasFlightData,
     hasNextData: !!nextData,
     nextDataKeys: nextData ? Object.keys(nextData?.props?.pageProps || {}).slice(0, 10) : [],
     jsonScriptCount: jsonScripts.length,
@@ -84,10 +87,17 @@ async function run(state, llm) {
       },
       SourceDiscoveryOutputSchema
     );
+
+    // If flight data is present, override mock/browser decisions to avoid unnecessary Playwright fallback
+    if (hasFlightData && (sourceDecision.sourceType === 'browser' || sourceDecision.requiresBrowser)) {
+      sourceDecision.sourceType = 'dse_flight';
+      sourceDecision.requiresBrowser = false;
+      sourceDecision.reason = 'DSE React Server Components flight data (self.__next_f) detected — structured flight extraction preferred';
+    }
   } catch (err) {
     log.warn('LLM source discovery failed, applying deterministic fallback', { error: err.message });
     // Deterministic fallback — no LLM required
-    sourceDecision = _deterministicFallback(evidenceSummary, nextData);
+    sourceDecision = _deterministicFallback(evidenceSummary, nextData, hasFlightData);
   }
 
   log.info('Source discovery decision', {
@@ -107,12 +117,14 @@ async function run(state, llm) {
       fetchedAt: fetchResult.fetchedAt,
       html,                          // kept in memory for next stages
       nextData,                       // kept for extraction
+      hasFlightData,
     },
     extractionStrategy: sourceDecision.sourceType,
     pageMetadata: {
       isRendered,
       bodyTextLength,
       tableCount: tables.length,
+      hasFlightData,
       hasNextData: !!nextData,
       sourceDecision,
     },
@@ -123,7 +135,18 @@ async function run(state, llm) {
  * Deterministic fallback when LLM is unavailable.
  * Logic mirrors the LLM's reasoning rules.
  */
-function _deterministicFallback(evidence, nextData) {
+function _deterministicFallback(evidence, nextData, hasFlightData) {
+  if (hasFlightData) {
+    return {
+      sourceType: 'dse_flight',
+      source: evidence.url,
+      confidence: 0.98,
+      reason: 'DSE React Server Components flight data (self.__next_f) detected — structured flight extraction preferred',
+      requiresBrowser: false,
+      alternativeSources: [],
+    };
+  }
+
   if (nextData) {
     return {
       sourceType: 'nextjs_data',

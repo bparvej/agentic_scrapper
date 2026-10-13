@@ -107,8 +107,17 @@ async function run(state) {
       },
     });
   } catch (err) {
-    log.error('Persistence failed', { runId, symbol, error: err.message });
-    return state.addError('persistence', err).transition('failed');
+    log.warn('Persistence skipped due to database error', { runId, symbol, error: err.message });
+    return state.addError('persistence', `Database offline: ${err.message}`).update({
+      status: 'completed',
+      completedAt: new Date(),
+      persistenceResult: {
+        recordsCreated: 0,
+        recordsUpdated: 0,
+        skipped: true,
+        reason: err.message,
+      },
+    });
   }
 }
 
