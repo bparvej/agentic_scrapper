@@ -178,6 +178,11 @@ function _normalizeNextData(raw, symbol, nextData) {
     foreignPercent: pick(['foreignPercent', 'foreign'], 'percentage', 'foreignPercent'),
     publicPercent: pick(['publicPercent', 'public'], 'percentage', 'publicPercent'),
 
+    corporateActions: raw.corporateActions || raw.corporate_actions || raw.dividendHistory || [],
+    announcements: raw.announcements || raw.recentAnnouncements || [],
+    interimFinancialPerformance: raw.interimFinancials || raw.interim_financial_performance || [],
+    financialPerformanceAudited: raw.multiYearFinancials || raw.financial_performance_audited || [],
+
     // Catch-all
     metadata,
     extractedFields,

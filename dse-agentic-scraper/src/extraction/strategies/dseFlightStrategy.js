@@ -244,9 +244,77 @@ function normalise(c, symbol) {
 
   const latestPeUnaudited = peUnauditedTable?.latestBasic ?? null;
   const latestPeAudited   = peAuditedTable?.latestBasic   ?? null;
-
   /* -------- Share ownership -------- */
   const latestPattern = (c.sharePattern || []).slice(-1)[0]?.pattern || {};
+
+  /* -------- Announcements (News) -------- */
+  const announcements = (c.recentAnnouncements || []).map((a) => ({
+    id: a.id ? String(a.id) : undefined,
+    date: a.date || 'Recent',
+    title: a.summary || a.title || 'Announcement',
+    summary: a.summary || a.title || 'Announcement',
+    description: a.body || a.description || '',
+    body: a.body || a.description || '',
+    type: a.type || 'Notice',
+  }));
+
+  /* -------- Corporate Actions -------- */
+  const corporateActions = [];
+
+  // A) From dividend history
+  if (Array.isArray(c.dividendHistory)) {
+    c.dividendHistory.forEach((dh) => {
+      let divStr = '';
+      if (dh.cash != null && dh.cash > 0) divStr += `${dh.cash}% Cash`;
+      if (dh.stock != null && dh.stock > 0) divStr += (divStr ? ', ' : '') + `${dh.stock}% Stock`;
+      if (!divStr) divStr = dh.cash === 0 ? 'No Dividend' : (dh.rights ? `Rights: ${dh.rights}` : '-');
+
+      corporateActions.push({
+        year: String(dh.year || '-'),
+        dividend: divStr,
+        agm_date: dh.year === 2025 ? (c.agmDate || '-') : '-',
+        record_date: '-',
+        type: 'Dividend History',
+        yield: dh.yieldPct != null ? `${dh.yieldPct}%` : '-',
+      });
+    });
+  }
+
+  // B) Extract AGM / Record date / declarations from recentAnnouncements
+  (c.recentAnnouncements || []).forEach((a) => {
+    const text = `${a.summary || ''} ${a.body || ''}`;
+    const isCorporate =
+      a.type === 'Dividend' ||
+      a.type === 'Record Date' ||
+      a.type === 'AGM' ||
+      /dividend|agm|record date|rights|bonus|corporate declaration/i.test(text);
+
+    if (isCorporate) {
+      const agmMatch = text.match(/(?:date of agm|agm date|agm)\s*[:=]?\s*([0-9]{2}[.\/-][0-9]{2}[.\/-][0-9]{4})/i);
+      const recMatch = text.match(/record date\s*[:=]?\s*([0-9]{2}[.\/-][0-9]{2}[.\/-][0-9]{4})/i);
+      const yearMatch = text.match(/(?:year ended|for the year)\s*[:=]?\s*(?:december|june)?\s*\d*,?\s*(20\d\d)/i) || (a.date ? a.date.match(/(20\d\d)/) : null);
+      const divMatch = text.match(/(\d+(?:\.\d+)?%?\s*(?:final|interim)?\s*cash\s*dividend|\d+(?:\.\d+)?%\s*(?:stock|bonus)\s*dividend)/i);
+
+      const agmDate = agmMatch ? agmMatch[1] : (a.type === 'Dividend' ? (c.agmDate || '-') : '-');
+      const recDate = recMatch ? recMatch[1] : '-';
+      const divDesc = divMatch ? divMatch[0] : (a.summary || '-');
+      const year = yearMatch ? yearMatch[1] : (a.date || '-');
+
+      const existing = corporateActions.find((ca) => ca.year === year);
+      if (existing) {
+        if (agmDate !== '-' && existing.agm_date === '-') existing.agm_date = agmDate;
+        if (recDate !== '-' && existing.record_date === '-') existing.record_date = recDate;
+      } else {
+        corporateActions.push({
+          year,
+          dividend: divDesc,
+          agm_date: agmDate,
+          record_date: recDate,
+          type: a.type || 'Corporate Action',
+        });
+      }
+    }
+  });
 
   return {
     symbol:           symbol.toUpperCase(),
@@ -303,6 +371,9 @@ function normalise(c, symbol) {
     latestPeAudited,
     // === Shared P/E History (used in both Cards 5 & 6) ===
     peTrend,
+    // === Corporate Actions & News ===
+    corporateActions,
+    announcements,
     // Extra
     dividendHistory:  c.dividendHistory   || [],
     description:      c.description       || null,
